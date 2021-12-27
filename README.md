@@ -15,7 +15,7 @@ The steps are all largely self-contained, fetching the preliminaries from variou
 This is pretty straightforward, since we'll need to grab a copy of the VMD source code, as well as packages that unlock VMD features.
 Getting the VMD source is easy, since you just go to the  [VMD download page](https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD) and grab a copy of the source.
 This will be a compressed archive, so you will need to uncompress it with `tar -zxf vmdsourcecode.tgz`, with the filenames actually looking something like: `vmd-1.9.4a55.src.tar.gz`.
-This specific alpha version is the one that is assumed throughout the guide.
+This specific alpha version is the one that is assumed throughout the guide, and may require revision to be used for other versions.
 
 Now, there are other packages that we will need to grab that are not installed by default on Ubuntu installations.
 A number of these are available from [my PPA](https://launchpad.net/~josh-vermaas/+archive/ubuntu/vmd-things), and would be installed via the following commands.
@@ -31,6 +31,45 @@ sudo apt-mark hold surf
 
 The last two lines might look a little funny, but there is an unrelated package called `surf`, and as a result we need to mark that the package is not allowed to change from the SURF 1.0 version made back in 1994.
 
+Now is as good a time as any to put together the directory structure Ubuntu expects.
+The structure is defined by Debian, and as a result, the [Debian package building documentation](https://wiki.debian.org/Packaging/Intro) is the best source for getting our bearings.
+Debian expects a rigid directory structure for packaging:
+```
+vmdpackaging
+|   vmd_1.9.4a55.orig.tar.gz
+|
+└───vmd-1.9.4a55
+    |	Makefile
+    |	vmd.png
+    |
+    └───debian
+    |	|	changelog
+    |	|	control
+    |	|	compat
+    |	|	copyright
+    |	|	rules
+    |	└───source
+    |		|	format
+    |		|	include-binaries
+    └───vmd
+    └───plugins
+```
+
+The basics are that there is a "source tarball" (ending will `orig.tar.gz`) in the root of the file tree, and a directory within the tree with a name that matches the source tarball.
+Inside that directory is the debian subdirectory, which has a number of files.
+Feel free to copy from this github repository to start with.
+
+```bash
+mkdir vmdpackaging
+cd vmdpackaging
+mv ~/vmd-1.9.4a55.src.tar.gz vmd_1.9.4a55.orig.tar.gz
+mkdir vmd-1.9.4a55
+cd vmd-1.9.4a55
+tar -zxf ../vmd_1.9.4a55.orig.tar.gz
+mv vmd-1.9.4a55 vmd
+#Get the initial, not totally broken debian files.
+git clone https://github.com/jvermaas/vmd-packaging-instructions.git
+```
 
 # Distributing VMD: An Ubuntu packaging guide
 
