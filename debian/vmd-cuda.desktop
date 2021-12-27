@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=vmd
+Name=VMD
+Comment=It's VMD!
+Icon=/usr/share/pixmaps/vmd.png
+Name[en_US]=vmd-cuda.desktop

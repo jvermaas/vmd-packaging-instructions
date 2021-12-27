@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=VMD
+Name[en_US]=VMD
+Exec=vmd
+Terminal=true
+Type=Application
+Icon=/usr/share/pixmaps/vmd.png

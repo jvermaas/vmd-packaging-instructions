@@ -1,0 +1,34 @@
+Source: vmd
+Section: science
+Priority: extra
+Maintainer: Josh Vermaas <vermaas2@illinois.edu>
+Build-Depends: debhelper (>= 10.0.0), libtachyon-mt-0-dev (>=0.99~b6), python3.8-dev, tcl8.6-dev, tk8.6-dev, libnetcdf-dev, libpng-dev, python3-numpy, mesa-common-dev, libglu1-mesa-dev, actc-dev, libxinerama-dev, libfltk1.3-dev, coreutils (>= 8.5), sed (>= 4.2.1), liboptix-dev (>=6.5.0), libospray-dev (>=2.4.0), libnvidiavideocodec-dev (>=10.0.26)
+Standards-Version: 3.9.7
+Homepage: http://www.ks.uiuc.edu/Research/vmd/
+#Vcs-Git: git://git.debian.org/collab-maint/vmd.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/vmd.git;a=summary
+
+Package: vmd-plugins
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, vmd | vmd-cuda
+Description: The plugins for VMD
+ An assortment of plugins to VMD that extend the scope of questions VMD
+ can answer. STAMP structural alignment is one thing. CATDCD is another.
+ 
+Package: vmd
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, ${perl:Depends}
+Recommends: vmd-plugins, surf, msms, tachyon, stride, tcllib
+Suggests: openbabel
+Conflicts: vmd-cuda
+Description: Visual Molecular Dynamics
+ This is the standard VMD binary, without CUDA.
+ 
+Package: vmd-cuda
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, ${perl:Depends}
+Recommends: vmd-plugins, surf, msms, tachyon, stride, liboptix, libospray, tcllib
+Suggests: openbabel
+Conflicts: vmd
+Description: Visual Molecular Dynamics
+ This is the standard VMD binary, with CUDA. Needs the binary nvidia drivers.

@@ -1,0 +1,6 @@
+vmd for Debian
+--------------
+
+In order to make this all work, build systems need the actc libraries, which are in no way standard. Other changes to "debianize" VMD are to add pretty desktop icons, and make the things compile without complaints.
+
+ -- Josh Vermaas <vermaas2@illinois.edu>  Wed, 14 Dec 2011 14:30:23 -0600

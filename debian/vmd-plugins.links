@@ -1,0 +1,4 @@
+/usr/lib/vmd/plugins/LINUXAMD64/bin/catdcd5.2/catdcd /usr/bin/catdcd
+/usr/lib/vmd/plugins/LINUX/bin/catdcd5.2/catdcd /usr/bin/catdcd
+/usr/lib/vmd/plugins/LINUXAMD64/bin/cionize1.0/cionize /usr/bin/cionize
+/usr/lib/vmd/plugins/LINUX/bin/cionize1.0/cionize /usr/bin/cionize
