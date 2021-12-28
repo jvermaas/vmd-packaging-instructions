@@ -4,7 +4,7 @@ This guide is mostly modelled off of the excellent [guide by Robin Betz](https:/
 Our goal is to take someone who would like to compile VMD themselves, and show them how to integrate it together with Debian packaging tools for distribution on Ubuntu desktops.
 The steps are all largely self-contained, fetching the preliminaries from various sources so that you have the libraries you need for fully featured VMD (including Python support!).
 
-1. Get VMD source and other preliminaries
+1. [Get VMD source and other preliminaries](#get-vmd-source-and-other-preliminaries)
 2. Setup Debian packaging requirements
 3. Make changes to VMD source 
 4. Compile
@@ -35,14 +35,15 @@ There are also Debian packages that need to be installed as basic dependencies.
 ```bash
 sudo apt install devscripts debhelper #Package building and general compilation
 sudo apt install nvidia-cuda-toolkit #Building CUDA applications
-sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
+sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
 ```
 
 One note that will be important here, is that you *may* already have a CUDA toolkit installed.
 CUDA toolkits installed by NVIDIA will install CUDA to `/usr/local/cuda`, whereas the Ubuntu version will install CUDA to `/usr`.
 The version installed above is currently CUDA 10, which does not have support for the latest and greatest graphics cards.
 Thus, the rest of this tutorial will assume that you got CUDA directly from NVIDIA.
-The code below is specific to Ubuntu 20.04.
+If you use the version directly from Ubuntu, you will need to modify the `configure` [script](#`vmd/configure`) accordingly.
+The code below will install the CUDA toolkit from NVIDIA for Ubuntu 20.04.
 
 ```bash
 sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
@@ -95,7 +96,7 @@ git fetch origin
 git checkout -b main --track origin/main
 ```
 
-There are *going* to be things we need to edit here. Start with `debian/control`, which helpfully lists the build-dependencies for building VMD and its plugins.
+There are *going* to be things we might want to edit here. Start with `debian/control`, which helpfully lists the build-dependencies for building VMD and its plugins.
 This the build-dependencies here are why we installed all those packages above.
 Change the maintainer (line 4) and move on.
 If you make your own changes to the VMD source, you'd note them in `debian/changelog`.
@@ -111,7 +112,7 @@ Check the general makefile first, which defines the optional compilation flags t
 The basic line that is easy to support with just Ubuntu packages from the general repository is: `OPENGL TK FLTK IMD ACTC XINERAMA LIBTACHYON ZLIB LIBPNG NETCDF TCL PYTHON PTHREADS NUMPY COLVARS CUDA`
 Two optional raytrace renderers are easy enough to add, but require that packages are installed to support those renderers.
 See the section [below](#bonus-libraries-and-fpm) to install `LIBOPTIX` and `LIBOSPRAY2`.
-If you choose to forego these rendering engines, you'll need to take them out of the `configure` lines of the `Makefile`.
+If you choose to forego these rendering engines, you'll need to take them out of the `configure` lines within the `Makefile`.
 
 ### `plugins/Make-arch`
 
@@ -364,7 +365,8 @@ sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
 
 This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
 At this point, you'd be done, with a functional VMD installation.
-If you are interested in additional functionality, you could add in extra pieces, such as the [tpr reader plugin](https://github.com/jvermaas/vmd-tprreader)
+If you are interested in additional functionality, you could add in extra pieces, such as the [tpr reader plugin](https://github.com/jvermaas/vmd-tprreader).
+The `fastpbc` command is also turned off by default, and can be turned on by editing `vmd/src/tcl_commands.C`, and eliminating preprocessor directives that skip `fastpbc` (line 283).
 
 ## Adding to a repository
 
@@ -393,7 +395,7 @@ sudo apt install ruby
 sudo gem install fpm
 ```
 
-With fpm, making a Debian package is super simple for precompiled stuff:
+With fpm, making a Debian package is super simple for precompiled libraries:
 
 ```bash
 wget https://github.com/ospray/OSPRay/releases/download/v2.8.0/ospray-2.8.0.x86_64.linux.tar.gz
