@@ -360,7 +360,7 @@ debuild -b
 
 This rolls through compiling the plugins and VMD itself, generating three packages in the `vmdpackaging` directory.
 Note that this generates *unsigned* packages, since y'all don't have my gpg key.
-If you want/need signed packages, you'll need to edit `debian/changelog` to have the most recent edit signed by the name and email address matching your gpg key.
+If you want/need signed packages, you'll need to edit `debian/changelog` to have the most recent edit signed by the name and email address matching your [gpg key](https://help.ubuntu.com/community/GnuPrivacyGuardHowto).
 To install these packages directly, you would do something like:
 ```bash
 cd ..
