@@ -20,16 +20,16 @@ all: compileplugins compilevmd
 
 compileplugins:
 	cd plugins; make $(PLUGINTEXT) TCLINC=-I/usr/include/tcl8.6 TCLLIB=-L/usr/lib \
-	NETCDFLIB=-L/usr/lib NETCDFINC=-I/usr/include/ -j ; make distrib PLUGINDIR=$(DESTDIR)/vmd-$(VMDVER)/plugins ; \
+	NETCDFLIB=-L/usr/lib NETCDFINC=-I/usr/include/ -j ; make distrib PLUGINDIR=$(DESTDIR)/vmd/plugins ; \
 	# TNGLIB=-L/usr/local/lib TNGINC=-I/usr/local/include
 copyvmd:
-	cp -r vmd-$(VMDVER) vmd-$(VMDVER)-cuda
+	cp -r vmd vmd-cuda
 
 compilevmd: copyvmd
-	cd vmd-$(VMDVER); \
+	cd vmd; \
 	./configure $(PLUGINTEXT) OPENGL TK FLTK IMD ACTC XINERAMA LIBTACHYON ZLIB LIBPNG NETCDF TCL PYTHON PTHREADS NUMPY COLVARS LIBOSPRAY2 ; \
 	cd src ; make -j
-	cd vmd-$(VMDVER)-cuda; \
+	cd vmd-cuda; \
 	./configure $(PLUGINTEXT) OPENGL TK FLTK IMD ACTC XINERAMA LIBTACHYON ZLIB LIBPNG NETCDF TCL PYTHON PTHREADS NUMPY COLVARS LIBOSPRAY2 CUDA  $(OPTIX); \
 	cd src ; make -j
 
@@ -41,8 +41,8 @@ installplugins:
 	
 	
 installvmd:
-	cd vmd-$(VMDVER)/src; make install
-	cd vmd-$(VMDVER)-cuda/src; make install
+	cd vmd/src; make install
+	cd vmd-cuda/src; make install
 
 install: installplugins installvmd
 	cp vmd.png debian/vmd/usr/share/pixmaps/
@@ -51,5 +51,5 @@ install: installplugins installvmd
 	cp debian/vmd.desktop debian/vmd-cuda/usr/share/applications/
 	
 clean:
-	cd plugins; make clean ; cd ../vmd-$(VMDVER) ; rm -rf plugins; cd src; make veryclean ; \
-	cd ../.. ; rm -rf vmd-$(VMDVER)-cuda
+	cd plugins; make clean ; cd ../vmd ; rm -rf plugins; cd src; make veryclean ; \
+	cd ../.. ; rm -rf vmd-cuda

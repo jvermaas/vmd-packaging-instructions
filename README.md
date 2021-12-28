@@ -33,9 +33,23 @@ The last two lines might look a little funny, but there is an unrelated package 
 
 There are also Debian packages that need to be installed as basic dependencies.
 ```bash
-sudo apt install devscripts #Package building and general compilation
+sudo apt install devscripts debhelper #Package building and general compilation
 sudo apt install nvidia-cuda-toolkit #Building CUDA applications
 sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
+```
+
+One note that will be important here, is that you *may* already have a CUDA toolkit installed.
+CUDA toolkits installed by NVIDIA will install CUDA to `/usr/local/cuda`, whereas the Ubuntu version will install CUDA to `/usr`.
+The version installed above is currently CUDA 10, which does not have support for the latest and greatest graphics cards.
+Thus, the rest of this tutorial will assume that you got CUDA directly from NVIDIA.
+The code below is specific to Ubuntu 20.04.
+
+```bash
+sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+sudo apt update
+sudo apt install cuda
 ```
 
 Now is as good a time as any to put together the directory structure Ubuntu expects.
