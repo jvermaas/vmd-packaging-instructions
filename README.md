@@ -1,14 +1,16 @@
-# Compiling VMD on Linux: A step by step guide
+# Compiling VMD on Ubuntu: A step by step guide
 
 This guide is mostly modelled off of the excellent [guide by Robin Betz](https://robinbetz.com/blog/2015/01/08/compiling-vmd-with-python-support/).
 Our goal is to take someone who would like to compile VMD themselves, and show them how to integrate it together with Debian packaging tools for distribution on Ubuntu desktops.
 The steps are all largely self-contained, fetching the preliminaries from various sources so that you have the libraries you need for fully featured VMD (including Python support!).
 
 1. [Get VMD source and other preliminaries](#get-vmd-source-and-other-preliminaries)
-2. Setup Debian packaging requirements
-3. Make changes to VMD source 
-4. Compile
-5. Install/make a repository
+2. [Setup Debian packaging requirements](#debian-package-structure)
+3. [Make changes to VMD source](#vmd-source-edits)
+4. [Compile](#debuild-builds-packages)
+5. [Install/make a repository](#adding-to-a-repository)
+
+For completeness, we also provide instructions for [building packages](#bonus-libraries-and-fpm) two raytracing libraries VMD can use.
 
 ## Get VMD source and other preliminaries
 
@@ -52,6 +54,8 @@ sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/r
 sudo apt update
 sudo apt install cuda
 ```
+
+## Debian Package Structure
 
 Now is as good a time as any to put together the directory structure Ubuntu expects.
 The structure is defined by Debian, and as a result, the [Debian package building documentation](https://wiki.debian.org/Packaging/Intro) is the best source for getting our bearings.
@@ -102,9 +106,9 @@ Change the maintainer (line 4) and move on.
 If you make your own changes to the VMD source, you'd note them in `debian/changelog`.
 Otherwise, we are ready to make changes to the VMD source itself that sort out what options we want to use.
 
-## A list of broken things
+## VMD Source Edits
 
-There are a number of areas where you'll need to change things in order to build VMD.
+There are a number of areas where you'll need to change things in order to build VMD starting from the released tarball.
 
 ### `Makefile`
 
@@ -387,7 +391,7 @@ sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a55-3_amd64.deb
 There are optional libraries VMD uses to unlock specific features, principally those distributed by NVIDIA ([OptiX](https://developer.nvidia.com/designworks/optix/download)) and Intel ([ospray](https://www.ospray.org/downloads.html)) for ray-trace rendering.
 Both Intel and NVIDIA have big scary legal teams that mean that it is important to pay closer attention to licenses.
 OSPRAY is under a permissive [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
-OptiX has a different license, so we'll need to download that explicitly.
+OptiX has a different license, so we'll need to download that explicitly from NVIDIA.
 Leveraging [fpm](https://github.com/jordansissel/fpm), a simplified ruby gems package for debian packaging, we can make packages for both ospray and OptiX.
 To install fpm, you would do this:
 ```bash
