@@ -342,6 +342,9 @@ This has stride, tachyon, and surf executables set to weird paths. I put them in
 ```
 Again, you could copy this from the edited version from github. `cp edited/vmd.sh vmd/bin/vmd.sh`
 
+There is a syntactical mistake in `vmd/src/OptiXRenderer.C` that newer versions of `gcc` don't like, so we also have one more copy to make.
+`cp edited/OptiXRenderer.C vmd/src/OptiXRenderer.C`
+
 ## Debuild
 
 You need alot of packages to compile VMD. See `debian/control`, and install the dependencies if needed.
