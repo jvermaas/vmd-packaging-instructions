@@ -363,6 +363,8 @@ sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
 ```
 
 This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
+At this point, you'd be done, with a functional VMD installation.
+If you are interested in additional functionality, you could add in extra pieces, such as the [tpr reader plugin](https://github.com/jvermaas/vmd-tprreader)
 
 ## Adding to a repository
 
