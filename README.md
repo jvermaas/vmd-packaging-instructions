@@ -342,21 +342,32 @@ This has stride, tachyon, and surf executables set to weird paths. I put them in
 ```
 Again, you could copy this from the edited version from github. `cp edited/vmd.sh vmd/bin/vmd.sh`
 
-There is a syntactical mistake in `vmd/src/OptiXRenderer.C` that newer versions of `gcc` don't like, so we also have one more copy to make.
+There is a syntactical mistake in `vmd/src/OptiXRenderer.C` in version 1.9.4a55 that newer versions of `gcc` don't like, so we also have one more copy to make.
 `cp edited/OptiXRenderer.C vmd/src/OptiXRenderer.C`
 
-## Debuild
+## Debuild builds packages
 
-You need alot of packages to compile VMD. See `debian/control`, and install the dependencies if needed.
-The build process itself is largely automated by `debuild`.
+The build process itself is largely automated by `debuild`, run from the base directory we have been working from (`vmdpackaging/vmd-1.9.4a55`).
 
 ```bash
 debuild -b
 ```
 
-## Adding to our repository
+This rolls through compiling the plugins and VMD itself, generating three packages in the `vmdpackaging` directory.
+Note that this generates *unsigned* packages, since y'all don't have my gpg key.
+If you want/need signed packages, you'll need to edit `debian/changelog` to have the most recent edit signed by the name and email address matching your gpg key.
+To install these packages directly, you would do something like:
+```bash
+cd ..
+sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
+```
 
-Alot of the setup comes from the [debian manual](https://wiki.debian.org/DebianRepository/SetupWithReprepro).
+This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
+
+## Adding to a repository
+
+If you want to host these packages for any reason to facilitate multiple computers keeping up to date via apt, it can be useful to create your own repository.
+Alot of the setup to make your own repository comes from the [debian manual](https://wiki.debian.org/DebianRepository/SetupWithReprepro).
 With the setup complete, the commands to add the newly built packages to the repository are something like this:
 
 ```bash
@@ -370,10 +381,10 @@ sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a55-3_amd64.deb
 # Bonus Libraries and fpm
 
 There are optional libraries VMD uses to unlock specific features, principally those distributed by NVIDIA ([OptiX](https://developer.nvidia.com/designworks/optix/download)) and Intel ([ospray](https://www.ospray.org/downloads.html)) for ray-trace rendering.
-Both Intel and NVIDIA have big scary legal teams that mean that I need to pay closer attention to licenses.
-OSPRAY is under a permissive [Apache license](http://www.apache.org/licenses/LICENSE-2.0) and so I include a version of the library within this github repository.
+Both Intel and NVIDIA have big scary legal teams that mean that it is important to pay closer attention to licenses.
+OSPRAY is under a permissive [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
 OptiX has a different license, so we'll need to download that explicitly.
-Leveraging [fpm](https://github.com/jordansissel/fpm), a simplified ruby gems package for debian packaging.
+Leveraging [fpm](https://github.com/jordansissel/fpm), a simplified ruby gems package for debian packaging, we can make packages for both ospray and OptiX.
 To install fpm, you would do this:
 ```bash
 sudo apt install ruby

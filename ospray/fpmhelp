@@ -1,2 +1,0 @@
-fpm -s dir -t deb -v 2.8.0 --iteration 1 --prefix=/usr -n libospray lib/*
-fpm -s dir -t deb -v 2.8.0 --iteration 1 --prefix=/usr -n libospray-dev include/*
