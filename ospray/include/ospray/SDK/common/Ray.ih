@@ -1,0 +1,104 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ospray
+#include "../math/AffineSpace.ih"
+#include "rkcommon/math/vec.ih"
+// embree
+#include "embree3/rtcore.isph"
+
+// NOTE(jda) - this MUST match Embree's RayHit structure layout!
+struct Ray
+{
+  /* ray input data */
+  vec3f org; /*!< ray origin */
+  float t0; /*!< start of valid ray interval */
+
+  vec3f dir; /*!< ray direction */
+  float time; //!< Time of this ray for motion blur, in 0..1
+
+  float t; /*!< end of valid ray interval, or distance to hit point after
+              'intersect' */
+  int32 mask; //!< Used to mask out objects during traversal
+  int32 rayID;
+  int32 flags;
+
+  /* hit data */
+  vec3f Ng; /*! geometry normal*/
+
+  float u; //!< Barycentric u coordinate of hit
+  float v; //!< Barycentric v coordinate of hit
+
+  int primID; //!< primitive ID
+  int geomID; //!< geometry ID
+  int instID; //!< instance ID
+};
+
+struct EmbreeIntersectionContext
+{
+  RTCIntersectContext ectx;
+  void *uniform userPtr;
+};
+
+// Hit query functions ////////////////////////////////////////////////////////
+
+inline bool noHit(const Ray &ray)
+{
+  return ray.geomID == RTC_INVALID_GEOMETRY_ID;
+}
+
+inline bool hadHit(const Ray &ray)
+{
+  return !noHit(ray);
+}
+
+// Ray initialization /////////////////////////////////////////////////////////
+
+inline void setRay(Ray &ray,
+    const vec3f &ray_org,
+    const vec3f &ray_dir,
+    const float t0,
+    const float t1,
+    const float time = 0.5f)
+{
+  ray.org = ray_org;
+  ray.dir = ray_dir;
+  ray.t0 = t0;
+  ray.t = t1;
+  ray.time = time;
+  ray.mask = -1;
+  ray.geomID = -1;
+  ray.primID = -1;
+  ray.instID = -1;
+}
+
+inline void setRay(Ray &ray,
+    const vec3f &ray_org,
+    const vec3f &ray_dir,
+    const float time = 0.5f)
+{
+  setRay(ray, ray_org, ray_dir, 0.f, inf, time);
+}
+
+inline void setRay(Ray &ray, const float t0, const float t1)
+{
+  setRay(ray, ray.org, ray.dir, t0, t1, ray.time);
+}
+
+// Ray transformation helpers /////////////////////////////////////////////////
+
+inline void transformRay(Ray &ray, AffineSpace3f &xfm)
+{
+  ray.org = xfmPoint(xfm, ray.org);
+  ray.dir = xfmVector(xfm, ray.dir);
+  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+}
+
+inline void transformRay(Ray &ray, AffineSpace3f xfm)
+{
+  ray.org = xfmPoint(xfm, ray.org);
+  ray.dir = xfmVector(xfm, ray.dir);
+  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+}

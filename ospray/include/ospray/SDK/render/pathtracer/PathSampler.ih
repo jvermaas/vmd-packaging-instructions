@@ -1,0 +1,14 @@
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+struct PathContext;
+struct PathState;
+struct Ray;
+struct ScreenSample;
+
+void samplePath(const PathContext &pathContext,
+    PathState &pathState,
+    Ray &ray,
+    ScreenSample &sample);

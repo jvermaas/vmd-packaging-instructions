@@ -1,0 +1,40 @@
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "BSDF.ih"
+
+inline BSDF_EvalRes Reflection_eval(
+    const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  return make_BSDF_EvalRes_zero();
+}
+
+inline BSDF_SampleRes Reflection_sample(
+    const varying BSDF *uniform self, const vec3f &wo, const vec2f &s, float ss)
+{
+  BSDF_SampleRes res;
+
+  res.wi = reflect(wo, getN(self));
+  res.pdf = inf;
+  res.type = BSDF_SPECULAR_REFLECTION;
+  res.weight = self->albedo;
+  return res;
+}
+
+inline varying BSDF *uniform Reflection_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    vec3f reflectance)
+{
+  varying BSDF *uniform self =
+      (varying BSDF * uniform) ShadingContext_alloc(ctx, sizeof(BSDF));
+  BSDF_Constructor(self,
+      reflectance,
+      BSDF_SPECULAR_REFLECTION,
+      Reflection_eval,
+      Reflection_sample,
+      frame);
+  return self;
+}

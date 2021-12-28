@@ -1,0 +1,8 @@
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#define ROULETTE 1
+#define MAX_ROULETTE_CONT_PROB 0.95f
+#define PDF_CULLING 0.0f

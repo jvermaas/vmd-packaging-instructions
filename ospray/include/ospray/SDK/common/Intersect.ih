@@ -1,0 +1,235 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/box.ih"
+
+// Ray intersection structures //////////////////////////////////////////////
+
+struct Hit
+{
+  bool hit;
+  float t;
+  vec3f N;
+  float u;
+};
+
+struct Intersections
+{
+  Hit entry;
+  Hit exit;
+};
+
+// Ray intersection helpers ///////////////////////////////////////////////////
+
+// robust ray-sphere intersection
+inline Intersections intersectSphere(const vec3f &rayOrg,
+    const vec3f &rayDir,
+    const uniform vec3f &center,
+    const uniform float radius)
+{
+  Intersections isect;
+  isect.entry.hit = false;
+  isect.exit.hit = false;
+  isect.entry.t = inf;
+  isect.exit.t = -inf;
+
+  const vec3f d = rayDir;
+  const float rd2 = 1.0f / dot(d, d); // 1/a
+  const vec3f CO = center - rayOrg;
+  // transformation to avoid missing a small sphere which is far away:
+  // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
+  const float projCO = dot(CO, d) * rd2; // in ray-space
+  const vec3f perp = CO - projCO * d;
+  const float l2 = dot(perp, perp);
+  const uniform float r2 = sqr(radius);
+  if (l2 > r2)
+    return isect;
+  float td = sqrt((r2 - l2) * rd2);
+  isect.entry.hit = true;
+  isect.exit.hit = true;
+  isect.entry.t = projCO - td;
+  isect.exit.t = projCO + td;
+
+  // above solutions are problematic if rays starts close to the sphere
+  // (due to catastrophic cancellation, because then |projCO| ~ td)
+  // the usual recommendation is to choose the one solution with same sign:
+  //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
+  // and compute the other solution via t1*t2=c/a:
+  //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
+  // this is more precise, but still problematic in particular for large
+  // spheres, because |CO| ~ r; slightly better alternative, but costly sqrt:
+  //   const float f = sqrt(dot(CO, CO));
+  //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
+  // the only variant I found that has high enough precision to avoid
+  // self-intersections of 2ndary rays is to (re-)compute most terms (CO, dot,
+  // r2, t2) with doubles; large spheres are a rare usecase for OSPRay, thus we
+  // use instead as a workaround an additional, radius-dependent epsilon
+
+  // cannot easily be moved to postIntersect
+  // we need hit in object space, in postIntersect it is in world-space
+  isect.entry.N = -td * d - perp;
+  isect.exit.N = td * d - perp;
+
+  return isect;
+}
+
+inline Intersections intersectCylinder(const vec3f &rayOrg,
+    const vec3f &rayDir,
+    const uniform vec3f &v0,
+    const uniform vec3f &v1,
+    const uniform float radius)
+{
+  Intersections isect;
+  isect.entry.hit = false;
+  isect.exit.hit = false;
+  isect.entry.t = inf;
+  isect.exit.t = -inf;
+
+  const uniform vec3f cZ = v1 - v0;
+  const vec3f q = rayOrg - v0;
+
+  const uniform float z2 = dot(cZ, cZ);
+  const float d = dot(cZ, rayDir);
+  const float c = dot(cZ, q);
+
+  const float A = z2 - sqr(d);
+  const float B = z2 * dot(q, rayDir) - c * d;
+  const float C = z2 * dot(q, q) - sqr(c) - sqr(radius) * z2;
+
+  float radical = B * B - A * C;
+  if (radical < 0.f) {
+    return isect;
+  }
+
+  radical = sqrt(radical);
+
+  const float tin = (-B - radical) / A;
+  const float tout = (-B + radical) / A;
+
+  // first hit
+  const float yin = c + tin * d;
+  if (yin > 0.f && yin < z2) {
+    // body hit
+    isect.entry.hit = true;
+    isect.entry.t = tin;
+    isect.entry.u = yin * rcp(z2);
+    isect.entry.N = (q + tin * rayDir - cZ * yin * rcp(z2)) * rcp(radius);
+  } else {
+    const float tcapin = (((yin < 0.f) ? 0.f : z2) - c) / d;
+    if (abs(B + A * tcapin) < radical) {
+      // cap hit
+      isect.entry.hit = false;
+      isect.entry.t = tin;
+      isect.entry.u = (yin < 0.f) ? 0.f : 1.f;
+      const float us = signbits(yin) ? -1. : 1.;
+      isect.entry.N = cZ * us / z2;
+    }
+  }
+
+  // second hit
+  const float yout = c + tout * d;
+  if (yout > 0.f && yout < z2) {
+    // body hit
+    isect.exit.hit = true;
+    isect.exit.t = tout;
+    isect.exit.u = yout * rcp(z2);
+    isect.exit.N = (q + tout * rayDir - cZ * yout * rcp(z2)) * rcp(radius);
+  } else {
+    const float tcapout = (((yout < 0.f) ? 0.f : z2) - c) / d;
+    if (abs(B + A * tcapout) < radical) {
+      // cap hit
+      isect.exit.hit = false;
+      isect.exit.t = tout;
+      isect.exit.u = (yout < 0.f) ? 0.f : 1.f;
+      const float us = signbits(yout) ? -1. : 1.;
+      isect.exit.N = cZ * us / z2;
+    }
+  }
+
+  return isect;
+}
+
+inline Intersections intersectCapsule(const vec3f &rayOrg,
+    const vec3f &rayDir,
+    const uniform vec3f &v0,
+    const uniform vec3f &v1,
+    const uniform float radius)
+{
+  Intersections isect_pipe = intersectCylinder(rayOrg, rayDir, v0, v1, radius);
+  const Intersections isect_sph1 = intersectSphere(rayOrg, rayDir, v0, radius);
+  const Intersections isect_sph2 = intersectSphere(rayOrg, rayDir, v1, radius);
+
+  const float t_in =
+      min(min(isect_sph1.entry.t, isect_sph2.entry.t), isect_pipe.entry.t);
+  const float t_out =
+      max(max(isect_sph1.exit.t, isect_sph2.exit.t), isect_pipe.exit.t);
+
+  isect_pipe.entry.hit |= isect_sph1.entry.hit | isect_sph2.entry.hit;
+  isect_pipe.entry.t = t_in;
+  isect_pipe.exit.hit |= isect_sph1.exit.hit | isect_sph2.exit.hit;
+  isect_pipe.exit.t = t_out;
+
+  if (isect_sph1.entry.t == t_in) {
+    isect_pipe.entry.u = 0.f;
+    isect_pipe.entry.N = isect_sph1.entry.N;
+  } else if (isect_sph2.entry.t == t_in) {
+    isect_pipe.entry.u = 1.f;
+    isect_pipe.entry.N = isect_sph2.entry.N;
+  }
+
+  if (isect_sph1.exit.t == t_out) {
+    isect_pipe.exit.u = 0.f;
+    isect_pipe.exit.N = isect_sph1.exit.N;
+  } else if (isect_sph2.exit.t == t_out) {
+    isect_pipe.exit.u = 1.f;
+    isect_pipe.exit.N = isect_sph2.exit.N;
+  }
+
+  return isect_pipe;
+}
+
+inline Intersections intersectBox(
+    const vec3f &rayOrg, const vec3f &rayDir, const uniform box3f &box)
+{
+  Intersections isect;
+
+  const vec3f mins = (box.lower - rayOrg) * rcp_safe(rayDir);
+  const vec3f maxs = (box.upper - rayOrg) * rcp_safe(rayDir);
+  const vec3f nears = min(mins, maxs);
+  const vec3f fars = max(mins, maxs);
+
+  isect.entry.t = reduce_max(nears);
+  if (isect.entry.t == nears.x)
+    isect.entry.N = make_vec3f(rayDir.x > 0.0f ? -1.0f : 1.0f, 0.0f, 0.0f);
+  else if (isect.entry.t == nears.y)
+    isect.entry.N = make_vec3f(0.0f, rayDir.y > 0.0f ? -1.0f : 1.0f, 0.0f);
+  else
+    isect.entry.N = make_vec3f(0.0f, 0.0f, rayDir.z > 0.0f ? -1.0f : 1.0f);
+  isect.exit.t = reduce_min(fars);
+  if (isect.exit.t == fars.x)
+    isect.exit.N = make_vec3f(rayDir.x > 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
+  else if (isect.exit.t == fars.y)
+    isect.exit.N = make_vec3f(0.0f, rayDir.y > 0.0f ? 1.0f : -1.0f, 0.0f);
+  else
+    isect.exit.N = make_vec3f(0.0f, 0.0f, rayDir.z > 0.0f ? 1.0f : -1.0f);
+  isect.entry.hit = isect.entry.t < isect.exit.t;
+  isect.exit.hit = isect.entry.hit;
+
+  return isect;
+}
+
+inline Hit intersectPlane(
+    const vec3f &rayOrg, const vec3f &rayDir, const uniform vec4f &plane)
+{
+  Hit hit;
+  hit.hit = false;
+  const uniform vec3f normal = make_vec3f(plane);
+  const float DdN = dot(rayDir, normal);
+  hit.hit = DdN != 0.0f;
+  hit.N = normal;
+  hit.t = (plane.w - dot(rayOrg, normal)) * rcpf(DdN);
+
+  return hit;
+}

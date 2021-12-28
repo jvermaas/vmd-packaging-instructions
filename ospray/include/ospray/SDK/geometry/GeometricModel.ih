@@ -1,0 +1,76 @@
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Geometry.ih"
+#include "common/Data.ih"
+#include "math/AffineSpace.ih"
+#include "render/Renderer.ih"
+
+struct GeometricModel
+{
+  Geometry *geom;
+
+  Data1D color;
+  Data1D index; // per-primitive property mapping
+  Data1D material;
+
+  bool useRendererMaterialList;
+
+  bool invertedNormals;
+
+  float areaPDF;
+};
+
+inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
+    const Renderer *uniform renderer,
+    const int32 primID)
+{
+  if (!valid(self->material))
+    return NULL;
+
+  uint32 idx = primID;
+  if (valid(self->index)) {
+    idx = get_uint8(self->index, min(idx, self->index.numItems - 1));
+  }
+
+  uniform uint32 lastMaterial = self->material.numItems - 1;
+  Material **uniform mats = (Material * *uniform) self->material.addr;
+  if (self->useRendererMaterialList) {
+    idx = get_uint32(self->material, min(idx, lastMaterial));
+    mats = renderer->material;
+    lastMaterial = renderer->numMaterials - 1;
+  }
+
+  if (mats)
+    return mats[min(idx, lastMaterial)];
+}
+
+inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
+    const Renderer *uniform renderer,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
+{
+  Geometry *uniform geom = self->geom;
+
+  geom->postIntersect(geom, dg, ray, flags);
+
+  dg.areaPDF = self->areaPDF;
+
+  if (flags & DG_COLOR && valid(self->color)) {
+    uint32 idx = ray.primID;
+    if (valid(self->index)) {
+      idx = get_uint8(self->index, min(idx, self->index.numItems - 1));
+    }
+    dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
+  }
+
+  if (renderer) {
+    dg.material = GeometricModel_getMaterial(self, renderer, ray.primID);
+  }
+
+  if (flags & DG_NS && self->invertedNormals)
+    dg.Ns = neg(dg.Ns);
+}
