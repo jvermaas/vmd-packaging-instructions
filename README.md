@@ -426,7 +426,7 @@ sudo dpkg -i libospray*
 
 The basic idea is to untar the precompiled library, move the `lib` and `include` subdirectories into somewhere accessible, and use `fpm` to build debian packages from the directory structures.
 We can do something similar with OptiX.
-To get the OptiX library (specifically the 6.5 version VMD's API expects), you would download `NVIDIA-OptiX-SDK-6.5.0-linux64.sh` from [NVIDIA's developer site](https://developer.nvidia.com/designworks/optix/download), which requires a free account.
+To get the OptiX library (specifically the 6.5 version VMD's API expects, which is under "all older versions"), you would download `NVIDIA-OptiX-SDK-6.5.0-linux64.sh` from [NVIDIA's developer site](https://developer.nvidia.com/designworks/optix/download), which requires a free account.
 Once downloaded, you would run the shell script, and create packages out of it.
 
 ```bash
