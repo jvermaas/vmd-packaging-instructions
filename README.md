@@ -36,16 +36,18 @@ The last two lines might look a little funny, but there is an unrelated package 
 There are also Debian packages that need to be installed as basic dependencies.
 ```bash
 sudo apt install devscripts debhelper #Package building and general compilation
-sudo apt install nvidia-cuda-toolkit #Building CUDA applications
 sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
 ```
 
+To build VMD with CUDA, you will need a CUDA toolkit.
+You have two choices, using either the stock CUDA available from the Ubuntu repositories, or a more up to date version that comes from NVIDIA repositories.
 One note that will be important here, is that you *may* already have a CUDA toolkit installed.
 CUDA toolkits installed by NVIDIA will install CUDA to `/usr/local/cuda`, whereas the Ubuntu version will install CUDA to `/usr`.
-The version installed above is currently CUDA 10, which does not have support for the latest and greatest graphics cards.
+The version installed from the Ubuntu repositories is currently CUDA 10, which does not have support for the latest and greatest graphics cards.
 Thus, the rest of this tutorial will assume that you got CUDA directly from NVIDIA.
 If you use the version directly from Ubuntu, you will need to modify the `configure` [script](#`vmd/configure`) accordingly.
 The code below will install the CUDA toolkit from NVIDIA for Ubuntu 20.04.
+
 
 ```bash
 sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
@@ -53,6 +55,11 @@ sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda
 sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
 sudo apt update
 sudo apt install cuda
+```
+
+If you prefer the older CUDA packages in the Ubuntu repositories, you'd do the following.
+```bash
+sudo apt install nvidia-cuda-toolkit
 ```
 
 ## Debian Package Structure
@@ -361,9 +368,11 @@ debuild -b
 This rolls through compiling the plugins and VMD itself, generating three packages in the `vmdpackaging` directory.
 Note that this generates *unsigned* packages, since y'all don't have my gpg key.
 If you want/need signed packages, you'll need to edit `debian/changelog` to have the most recent edit signed by the name and email address matching your [gpg key](https://help.ubuntu.com/community/GnuPrivacyGuardHowto).
+Without a gpg key, you may get errors about generating unsigned packages.
+This is to be expected, and so long as the `.deb` files are produced, these errors can be ignored.
 To install these packages directly, you would do something like:
 ```bash
-cd ..
+cd .. #Puts you in the right directory.
 sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
 ```
 
@@ -389,6 +398,10 @@ sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a55-3_amd64.deb
 # Bonus Libraries and fpm
 
 There are optional libraries VMD uses to unlock specific features, principally those distributed by NVIDIA ([OptiX](https://developer.nvidia.com/designworks/optix/download)) and Intel ([ospray](https://www.ospray.org/downloads.html)) for ray-trace rendering.
+The APIs for these libraries change from time to time.
+While any OSPRay version in the 2.X branch should work (we've tested 2.8.0 and 2.4.0), OptiX is much pickier.
+VMD currently assumes the API from OptiX 6.5.0, which is under the "All older versions" button on the OptiX download page.
+
 Both Intel and NVIDIA have big scary legal teams that mean that it is important to pay closer attention to licenses.
 OSPRAY is under a permissive [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
 OptiX has a different license, so we'll need to download that explicitly from NVIDIA.
