@@ -2,7 +2,7 @@ Source: vmd
 Section: science
 Priority: extra
 Maintainer: Josh Vermaas <vermaas2@illinois.edu>
-Build-Depends: debhelper (>= 10.0.0), libtachyon-mt-0-dev (>=0.99~b6), python3.8-dev, tcl8.6-dev, tk8.6-dev, libnetcdf-dev, libpng-dev, python3-numpy, mesa-common-dev, libglu1-mesa-dev, actc-dev, libxinerama-dev, libfltk1.3-dev, coreutils (>= 8.5), sed (>= 4.2.1), liboptix-dev (>=6.5.0), libospray-dev (>=2.8.0)
+Build-Depends: debhelper (>= 10.0.0), libtachyon-mt-0-dev (>=0.99~b6), python3.8-dev, tcl8.6-dev, tk8.6-dev, libnetcdf-dev, libpng-dev, python3-numpy, mesa-common-dev, libglu1-mesa-dev, actc-dev, libxinerama-dev, libfltk1.3-dev, coreutils (>= 8.5), sed (>= 4.2.1)
 Standards-Version: 3.9.7
 Homepage: http://www.ks.uiuc.edu/Research/vmd/
 #Vcs-Git: git://git.debian.org/collab-maint/vmd.git
