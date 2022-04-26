@@ -123,7 +123,7 @@ Check the general makefile first, which defines the optional compilation flags t
 The basic line that is easy to support with just Ubuntu packages from the general repository is: `OPENGL TK FLTK IMD ACTC XINERAMA LIBTACHYON ZLIB LIBPNG NETCDF TCL PYTHON PTHREADS NUMPY COLVARS CUDA`
 Two optional raytrace renderers are easy enough to add, but require that packages are installed to support those renderers.
 See the section [below](#bonus-libraries-and-fpm) to install `LIBOPTIX` and `LIBOSPRAY2`.
-If you choose to forego these rendering engines, you'll need to take them out of the `configure` lines within the `Makefile`.
+If you choose to add these rendering engines, you'll need to uncomment two commented lines in the `Makefile`.
 
 ### `plugins/Make-arch`
 
