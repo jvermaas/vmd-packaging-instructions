@@ -1,12 +1,12 @@
 DESTDIR=$(shell pwd)
 ARCH=$(shell getconf LONG_BIT)
 VMDVER="1.9.4a55"
+OPTIX=""
 ifeq ($(ARCH),64)
 	PLUGINTEXT=LINUXAMD64
-	OPTIX=LIBOPTIX 
+	#OPTIX=LIBOPTIX #Uncomment this if you want to add in the OptiX renderer. 
 else
 	PLUGINTEXT=LINUX
-	OPTIX=""
 endif
 PLUGINDIR=$(DESTDIR)/../vmd-plugins/usr/lib/vmd/plugins
 PLUGINBINDIR=$(DESTDIR)/../vmd-plugins/usr/bin
