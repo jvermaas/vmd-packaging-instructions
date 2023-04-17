@@ -57,6 +57,7 @@ sudo apt install cuda
 ```
 
 If you prefer the older CUDA packages in the Ubuntu repositories, you'd do the following.
+I cannot emphasize enough how much of a pain it is to work with the Ubuntu version, which has at least one showstopping compilation bug in 22.04.
 ```bash
 sudo apt install nvidia-cuda-toolkit
 ```
@@ -353,12 +354,9 @@ This has stride, tachyon, and surf executables set to weird paths. I put them in
 ```
 Again, you could copy this from the edited version from github. `cp edited/vmd.sh vmd/bin/vmd.sh`
 
-There is a syntactical mistake in `vmd/src/OptiXRenderer.C` in version 1.9.4a55 that newer versions of `gcc` don't like, so we also have one more copy to make.
-`cp edited/OptiXRenderer.C vmd/src/OptiXRenderer.C`
-
 ## Debuild builds packages
 
-The build process itself is largely automated by `debuild`, run from the base directory we have been working from (`vmdpackaging/vmd-1.9.4a55`).
+The build process itself is largely automated by `debuild`, run from the base directory we have been working from (`vmdpackaging/vmd-1.9.4a57`).
 
 ```bash
 debuild -b
@@ -372,7 +370,7 @@ This is to be expected, and so long as the `.deb` files are produced, these erro
 To install these packages directly, you would do something like:
 ```bash
 cd .. #Puts you in the right directory.
-sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
+sudo dpkg -i vmd-cuda_1.9.4a57-1_amd64.deb vmd-plugins_1.9.4a55-1_amd64.deb
 ```
 
 This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
@@ -388,9 +386,9 @@ With the setup complete, the commands to add the newly built packages to the rep
 
 ```bash
 cd /var/www/repos/apt/ubuntu/
-sudo reprepro includedeb focal ~/vmdpackaging/vmd-cuda_1.9.4a55-3_amd64.deb
-sudo reprepro includedeb focal ~/vmdpackaging/vmd-plugins_1.9.4a55-3_amd64.deb
-sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a55-3_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd-cuda_1.9.4a57-1_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd-plugins_1.9.4a57-1_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a57-1_amd64.deb
 ```
 
 
