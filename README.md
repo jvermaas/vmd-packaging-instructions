@@ -16,7 +16,7 @@ For completeness, we also provide instructions for [building packages](#bonus-li
 
 This is pretty straightforward, since we'll need to grab a copy of the VMD source code, as well as packages that unlock VMD features.
 Getting the VMD source is easy, since you just go to the  [VMD download page](https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD) and grab a copy of the source.
-This will be a compressed archive, so you will need to uncompress it with `tar -zxf vmdsourcecode.tgz`, with the filenames actually looking something like: `vmd-1.9.4a55.src.tar.gz`.
+This will be a compressed archive, so you will need to uncompress it with `tar -zxf vmdsourcecode.tgz`, with the filenames actually looking something like: `vmd-1.9.4a57.src.tar.gz`.
 This specific alpha version is the one that is assumed throughout the guide, and may require revision to be used for other versions.
 
 Now, there are other packages that we will need to grab that are not installed by default on Ubuntu installations.
@@ -36,7 +36,7 @@ The last two lines might look a little funny, but there is an unrelated package 
 There are also Debian packages that need to be installed as basic dependencies.
 ```bash
 sudo apt install devscripts debhelper #Package building and general compilation
-sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
+sudo apt install libtachyon-mt-0-dev python3.10-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
 ```
 
 To build VMD with CUDA, you will need a CUDA toolkit.
@@ -50,9 +50,8 @@ The code below will install the CUDA toolkit from NVIDIA for Ubuntu 20.04.
 
 
 ```bash
-sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt update
 sudo apt install cuda
 ```
@@ -69,9 +68,9 @@ The structure is defined by Debian, and as a result, the [Debian package buildin
 Debian expects a rigid directory structure for packaging:
 ```
 vmdpackaging
-|   vmd_1.9.4a55.orig.tar.gz
+|   vmd_1.9.4a57.orig.tar.gz
 |
-└───vmd-1.9.4a55
+└───vmd-1.9.4a57
     |	Makefile
     |	vmd.png
     |
@@ -95,11 +94,11 @@ Feel free to copy from this github repository to start with.
 ```bash
 mkdir vmdpackaging
 cd vmdpackaging
-mv ~/vmd-1.9.4a55.src.tar.gz vmd_1.9.4a55.orig.tar.gz
-mkdir vmd-1.9.4a55
-cd vmd-1.9.4a55
-tar -zxf ../vmd_1.9.4a55.orig.tar.gz
-mv vmd-1.9.4a55 vmd
+mv ~/vmd-1.9.4a57.src.tar.gz vmd_1.9.4a57.orig.tar.gz
+mkdir vmd-1.9.4a57
+cd vmd-1.9.4a57
+tar -zxf ../vmd_1.9.4a57.orig.tar.gz
+mv vmd-1.9.4a57 vmd
 #Get the initial, not totally broken debian files.
 git init
 git remote add origin https://github.com/jvermaas/vmd-packaging-instructions.git
