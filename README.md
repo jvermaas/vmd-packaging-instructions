@@ -190,6 +190,7 @@ This is the diff:
 +		    "-gencode arch=compute_75,code=sm_75 " .
 +                    "-gencode arch=compute_80,code=sm_80 " .
 +                    "-gencode arch=compute_86,code=sm_86 " .
++                    "-gencode arch=compute_89,code=sm_89 " .
                      "--ftz=true ";
  #                    "-gencode arch=compute_75,code=sm_75 " .
  $arch_gcc         = "gcc";
@@ -249,7 +250,7 @@ This is the diff:
    $stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$vmd_library_dir/numpy/lib_$config_arch/include";
    $stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/site-packages/numpy/core/include";
 -  $python_libs        = "-lpython2.5 -lpthread";
-+  $python_libs        = "-lpython3.8 -lpthread";
++  $python_libs        = "-lpython3.10 -lpthread";
  }
  
  $python_defines     = "-DVMDPYTHON";
