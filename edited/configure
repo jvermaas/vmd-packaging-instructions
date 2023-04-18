@@ -11,7 +11,7 @@ use Cwd;
 $cwd = getcwd();
 @parts = split(/\//, $cwd) ;
 $name = $parts[-1];
-$versionstring = quotemeta "-1.9.4a55";
+$versionstring = quotemeta "-1.9.4a57";
 $name =~ s/$versionstring//g;
 print "Current working directory:\n";
 print "$cwd\n";
@@ -32,13 +32,13 @@ $install_library_dir="$cwd/../debian/$name/usr/lib/$install_name";
 
 # optionally override hard-coded defaults above with environment variables
 if ($ENV{VMDINSTALLNAME}) {
-  $install_name = $ENV{VMDINSTALLNAME}
+	$install_name = $ENV{VMDINSTALLNAME}
 }
 if ($ENV{VMDINSTALLBINDIR}) {
-  $install_bin_dir = $ENV{VMDINSTALLBINDIR}
+	$install_bin_dir = $ENV{VMDINSTALLBINDIR}
 }
 if ($ENV{VMDINSTALLLIBRARYDIR}) {
-  $install_library_dir = $ENV{VMDINSTALLLIBRARYDIR}
+	$install_library_dir = $ENV{VMDINSTALLLIBRARYDIR}
 }
 
 ##############################################################################
@@ -136,7 +136,7 @@ if ($ENV{VMDINSTALLLIBRARYDIR}) {
 # ICC          - compile with Intel C/C++ v12 (or later) compilers
 # PGCC         - compile with Portland Group compilers
 # XLC          - compile with IBM XLC compiler 
-# PURIFY       - compile with purify instrumentation
+# SANITIZE     - compile with address sanitizer instrumentation
 # SILENT       - suppress the make command echo
 # SHARED       - compile a shared library instead of a standalone executable
 # CCACHE       - compile with ccache (requires local configuration)
@@ -146,9 +146,7 @@ if ($ENV{VMDINSTALLLIBRARYDIR}) {
 # In order to compile VMD such that memory leak and bounds checkers work
 # you may need to compile VMD with a fairly minimalistic set of options.
 # On recent Linux valgrind builds, these options worked well:
-#  LINUX MESA FLTK TK TCL SILENT
-# Purify is generally more forgiving, but these same options should also work
-# well with purify.
+#  LINUX OPENGL FLTK TK TCL SILENT
 #
 
 ############################################################################
@@ -157,25 +155,25 @@ if ($ENV{VMDINSTALLLIBRARYDIR}) {
 
 ## Test for existence of a properly compiled plugin tree
 if (!(-e "plugins")) {
-  print "\n";
-  print "VMD plugin directory not found.\n";
-  print "Please compile the VMD plugins and do 'make distrib' to copy them\n";
-  print "into a 'plugins' directory linked or located in this directory.\n";
-  print "Be sure your PLUGINDIR environment variable is set before running\n";
-  print "'make distrib' in the plugin build area.\n";
-  print "\n";
-  die "Halting configuration until VMD plugins are built.\n";
+	print "\n";
+	print "VMD plugin directory not found.\n";
+	print "Please compile the VMD plugins and do 'make distrib' to copy them\n";
+	print "into a 'plugins' directory linked or located in this directory.\n";
+	print "Be sure your PLUGINDIR environment variable is set before running\n";
+	print "'make distrib' in the plugin build area.\n";
+	print "\n";
+	die "Halting configuration until VMD plugins are built.\n";
 } else {
-  if (!(-e "plugins/include/vmdplugin.h")) {
-    print "\n";
-    print "VMD plugin include files or directory not found.\n";
-    print "Please compile the VMD plugins and do 'make distrib' to copy them\n";
-    print "into a 'plugins' directory linked or located in this directory.\n";
-    print "Be sure your PLUGINDIR environment variable is set before running\n";
-    print "'make distrib' in the plugin build area.\n";
-    print "\n";
-    die "Halting configuration until VMD plugins are built.\n";
-  }
+	if (!(-e "plugins/include/vmdplugin.h")) {
+		print "\n";
+		print "VMD plugin include files or directory not found.\n";
+		print "Please compile the VMD plugins and do 'make distrib' to copy them\n";
+		print "into a 'plugins' directory linked or located in this directory.\n";
+		print "Be sure your PLUGINDIR environment variable is set before running\n";
+		print "'make distrib' in the plugin build area.\n";
+		print "\n";
+		die "Halting configuration until VMD plugins are built.\n";
+	}
 } 
 
 #################### Parse command line options   ###########
@@ -183,18 +181,18 @@ if (!(-e "plugins")) {
 @archlist=('AIX6_64', 'ANDROIDARMV7A', 'BLUEGENEQ', 'BLUEWATERS', 'CRAY_XC', 'CRAY_XK', 'FREEBSD', 'FREEBSDAMD64', 'LINUX', 'LINUXAMD64', 'LINUXARM64', 'LINUXCARMA', 'LINUXPPC64', 'MACOSX', 'MACOSXARM64', 'MACOSXX86', 'MACOSXX86_64', 'OPENPOWER', 'SUMMIT', 'SUMMITDEV', 'SOLARIS2', 'SOLARIS2_64', 'SOLARISX86', 'SOLARISX86_64', 'WIN32', 'WIN64');
 
 if ($#ARGV == -1) {
-    $text = `cat configure.options`;
-    chop($text);
-    print "using configure.options: $text\n";
-    $text =~ s/^\s*//g;
-    $text =~ s/\s*$//g;
-    $text =~ s/\s+/ /g;
-    @ARGV = split(/\s/, $text);
+		$text = `cat configure.options`;
+		chop($text);
+		print "using configure.options: $text\n";
+		$text =~ s/^\s*//g;
+		$text =~ s/\s*$//g;
+		$text =~ s/\s+/ /g;
+		@ARGV = split(/\s/, $text);
 }
 
 $config_arch = shift @ARGV;
 if ( ! grep( $_ eq $config_arch , @archlist)) {
-    die "Architecture $config_arch not supported (@archlist)\n";
+		die "Architecture $config_arch not supported (@archlist)\n";
 }
 
 $config_vulkan          = 0;  # Vulkan
@@ -217,6 +215,7 @@ $config_actc            = 0;  # ACTC
 $config_avx512          = 0;  # AVX512
 $config_cpudispatch     = 0;  # CPUDISPATCH
 $config_cuda            = 0;  # CUDA
+$config_cxx11           = 0;  # Require C++11 or greater
 $config_opencl          = 0;  # OpenCL
 $config_openhmd         = 0;  # OpenHMD driver for Oculus Rift
 $config_imd             = 0;  # interactive MD sockets code etc.
@@ -246,104 +245,105 @@ $config_rpm             = 0;  # off by default
 $config_staticplugin    = 1;  # on by default
 
 foreach $term (@ARGV) {
-    # graphics/windowing library
-    if ($term eq "VULKAN")          { $config_vulkan          = 1; next; }
-    if ($term eq "OPENGL")          { $config_opengl          = 1; 
-                                      $config_opengl_dep      = 1; next; }
-    if ($term eq "OPENGLPBUFFER")   { $config_opengl_pbuffer  = 1; 
-                                      $config_opengl_dep      = 1; next; }
-    if ($term eq "EGLPBUFFER")      { $config_egl_pbuffer     = 1; 
-                                      $config_opengl_dep      = 1; 
-                                      $config_opengl_dispatch = 1; next; }
-    if ($term eq "SDL")             { $config_sdl             = 1;
-                                      $config_opengl_dep      = 1; next; }
-    if ($term eq "FLTKOPENGL")      { $config_fltkopengl      = 1;
-                                      $config_opengl_dep      = 1; next; }
-    if ($term eq "MESA")            { $config_mesa            = 1; next; }
-    if ($term eq "CAVE")            { $config_cave            = 1;
-                                      $config_opengl_dep      = 1; next; }
-    if ($term eq "FREEVR")          { $config_freevr          = 1;
-                                      $config_opengl_dep      = 1; next; }
+		# graphics/windowing library
+		if ($term eq "VULKAN")          { $config_vulkan          = 1; next; }
+		if ($term eq "OPENGL")          { $config_opengl          = 1; 
+																			$config_opengl_dep      = 1; next; }
+		if ($term eq "OPENGLPBUFFER")   { $config_opengl_pbuffer  = 1; 
+																			$config_opengl_dep      = 1; next; }
+		if ($term eq "EGLPBUFFER")      { $config_egl_pbuffer     = 1; 
+																			$config_opengl_dep      = 1; 
+																			$config_opengl_dispatch = 1; next; }
+		if ($term eq "SDL")             { $config_sdl             = 1;
+																			$config_opengl_dep      = 1; next; }
+		if ($term eq "FLTKOPENGL")      { $config_fltkopengl      = 1;
+																			$config_opengl_dep      = 1; next; }
+		if ($term eq "MESA")            { $config_mesa            = 1; next; }
+		if ($term eq "CAVE")            { $config_cave            = 1;
+																			$config_opengl_dep      = 1; next; }
+		if ($term eq "FREEVR")          { $config_freevr          = 1;
+																			$config_opengl_dep      = 1; next; }
 
-    # GUI options
-    if ($term eq "FLTK" )           { $config_fltk            = 1; next; }
-    if ($term eq "TK")              { $config_tk              = 1; next; }
-    
-    # Optional components
-    if ($term eq "ACTC")            { $config_actc            = 1; next; }
-    if ($term eq "AVX512")          { $config_avx512          = 1; next; }
-    if ($term eq "CPUDISPATCH")     { $config_cpudispatch     = 1; next; }
-    if ($term eq "CUDA")            { $config_cuda            = 1; next; }
-    if ($term eq "OPENCL")          { $config_opencl          = 1; next; }
-    if ($term eq "MPI")             { $config_mpi             = 1; next; }
-    if ($term eq "NVENC")           { $config_nvenc           = 1; next; }
-    if ($term eq "NVPIPE")          { $config_nvpipe          = 1; next; }
-    if ($term eq "NVTX")            { $config_nvtx            = 1; next; }
-    if ($term eq "IMD")             { $config_imd             = 1; next; }
-    if ($term eq "LIBSBALL")        { $config_libsball        = 1; next; }
-    if ($term eq "XINERAMA")        { 
-      if ($config_opengl) {
-        $config_xinerama       = 1; 
-      } else {
-        print "Removing XINERAMA option since windowed-OpenGL is not enabled\n";
-      }
-      next; 
-    }
-    if ($term eq "XINPUT")          {
-      if ($config_opengl) {
-        $config_xinput         = 1;
-      } else {
-        print "Removing XINPUT option since windowed-OpenGL is not enabled\n";
-      }
-      next;
-    }
-    if ($term eq "TDCONNEXION")     { $config_tdconnexion     = 1; next; }
-    if ($term eq "LIBANARI" )       { $config_libanari        = 1; next; }
-    if ($term eq "LIBGELATO" )      { $config_libgelato       = 1; next; }
-    if ($term eq "LIBOPTIX" )       { $config_liboptix        = 1; next; }
-    if ($term eq "LIBOSPRAY" )      { $config_libospray       = 1; next; }
-    if ($term eq "LIBOSPRAY2" )     { $config_libospray2      = 1; next; }
-    if ($term eq "LIBTACHYON")      { $config_libtachyon      = 1; next; }
-    if ($term eq "LIBPNG")          { $config_libpng          = 1; next; }
-    if ($term eq "LINENOISE")       { $config_linenoise       = 1; next; }
-    if ($term eq "ZLIB")            { $config_zlib            = 1; next; }
-    if ($term eq "OPENHMD" )        { $config_openhmd         = 1; next; }
-    if ($term eq "VRPN")            { $config_vrpn            = 1; next; }
-    if ($term eq "NETCDF")          { $config_netcdf          = 1; next; }
-    if ($term eq "COLVARS")         { $config_colvars         = 1; next; }
-    if ($term eq "CONTRIB")         { $config_contrib         = 1; next; }
-    if ($term eq "TCL")             { $config_tcl             = 1; next; }
-    if ($term eq "PYTHON")          { $config_python          = 1; next; }
-    if ($term eq "PTHREADS")        { $config_pthreads        = 1; next; }
-    if ($term eq "NUMPY")           { $config_numeric         = 1; next; }
-    if ($term eq "RPM")             { $config_rpm             = 1; next; }
-    if ($term eq "TKCON")           { $config_tkcon           = 1; next; }
-    if ($term eq "NOSTATICPLUGINS") { $config_staticplugin    = 0; next; }
+		# GUI options
+		if ($term eq "FLTK" )           { $config_fltk            = 1; next; }
+		if ($term eq "TK")              { $config_tk              = 1; next; }
+		
+		# Optional components
+		if ($term eq "ACTC")            { $config_actc            = 1; next; }
+		if ($term eq "AVX512")          { $config_avx512          = 1; next; }
+		if ($term eq "CPUDISPATCH")     { $config_cpudispatch     = 1; next; }
+		if ($term eq "CUDA")            { $config_cuda            = 1; next; }
+		if ($term eq "CXX11")           { $config_cxx11           = 1; next; }
+		if ($term eq "OPENCL")          { $config_opencl          = 1; next; }
+		if ($term eq "MPI")             { $config_mpi             = 1; next; }
+		if ($term eq "NVENC")           { $config_nvenc           = 1; next; }
+		if ($term eq "NVPIPE")          { $config_nvpipe          = 1; next; }
+		if ($term eq "NVTX")            { $config_nvtx            = 1; next; }
+		if ($term eq "IMD")             { $config_imd             = 1; next; }
+		if ($term eq "LIBSBALL")        { $config_libsball        = 1; next; }
+		if ($term eq "XINERAMA")        { 
+			if ($config_opengl) {
+				$config_xinerama       = 1; 
+			} else {
+				print "Removing XINERAMA option since windowed-OpenGL is not enabled\n";
+			}
+			next; 
+		}
+		if ($term eq "XINPUT")          {
+			if ($config_opengl) {
+				$config_xinput         = 1;
+			} else {
+				print "Removing XINPUT option since windowed-OpenGL is not enabled\n";
+			}
+			next;
+		}
+		if ($term eq "TDCONNEXION")     { $config_tdconnexion     = 1; next; }
+		if ($term eq "LIBANARI" )       { $config_libanari        = 1; next; }
+		if ($term eq "LIBGELATO" )      { $config_libgelato       = 1; next; }
+		if ($term eq "LIBOPTIX" )       { $config_liboptix        = 1; next; }
+		if ($term eq "LIBOSPRAY" )      { $config_libospray       = 1; next; }
+		if ($term eq "LIBOSPRAY2" )     { $config_libospray2      = 1; next; }
+		if ($term eq "LIBTACHYON")      { $config_libtachyon      = 1; next; }
+		if ($term eq "LIBPNG")          { $config_libpng          = 1; next; }
+		if ($term eq "LINENOISE")       { $config_linenoise       = 1; next; }
+		if ($term eq "ZLIB")            { $config_zlib            = 1; next; }
+		if ($term eq "OPENHMD" )        { $config_openhmd         = 1; next; }
+		if ($term eq "VRPN")            { $config_vrpn            = 1; next; }
+		if ($term eq "NETCDF")          { $config_netcdf          = 1; next; }
+		if ($term eq "COLVARS")         { $config_colvars         = 1; next; }
+		if ($term eq "CONTRIB")         { $config_contrib         = 1; next; }
+		if ($term eq "TCL")             { $config_tcl             = 1; next; }
+		if ($term eq "PYTHON")          { $config_python          = 1; next; }
+		if ($term eq "PTHREADS")        { $config_pthreads        = 1; next; }
+		if ($term eq "NUMPY")           { $config_numeric         = 1; next; }
+		if ($term eq "RPM")             { $config_rpm             = 1; next; }
+		if ($term eq "TKCON")           { $config_tkcon           = 1; next; }
+		if ($term eq "NOSTATICPLUGINS") { $config_staticplugin    = 0; next; }
 
-    # once optional, these are now required.  They exist for backwards
-    # compatibility; some may be expanded again in the future
-    if ($term eq "SURF")            { next; }
-    if ($term eq "MSMS")            { next; }
-    if ($term eq "NANOSHAPER")      { next; }
+		# once optional, these are now required.  They exist for backwards
+		# compatibility; some may be expanded again in the future
+		if ($term eq "SURF")            { next; }
+		if ($term eq "MSMS")            { next; }
+		if ($term eq "NANOSHAPER")      { next; }
 
-    # compiler and make options 
-    if ($term eq "SILENT")          { $config_silent          = 1; next; }
-    if ($term eq "NOSILENT")        { $config_silent          = 0; next; }
-    if ($term eq "STATIC")          { $config_static          = 1; next; }
-    if ($term eq "LP64")            { $config_lp64            = 1; next; }
-    if ($term eq "CLANG")           { $config_clang           = 1; next; }
-    if ($term eq "GCC")             { $config_gcc             = 1; next; }
-    if ($term eq "ICC")             { $config_icc             = 1; next; }
-    if ($term eq "PGCC")            { $config_pgcc            = 1; next; }
-    if ($term eq "XLC")             { $config_xlc             = 1; next; }
-    if ($term eq "MSVC")            { $config_msvc            = 1; next; }
-    if ($term eq "PURIFY")          { $config_purify          = 1; next; }
-    if ($term eq "SHARED")          { $config_shared          = 1; next; }
-    if ($term eq "CCACHE")          { $config_ccache          = 1; next; }
+		# compiler and make options 
+		if ($term eq "SILENT")          { $config_silent          = 1; next; }
+		if ($term eq "NOSILENT")        { $config_silent          = 0; next; }
+		if ($term eq "STATIC")          { $config_static          = 1; next; }
+		if ($term eq "LP64")            { $config_lp64            = 1; next; }
+		if ($term eq "CLANG")           { $config_clang           = 1; next; }
+		if ($term eq "GCC")             { $config_gcc             = 1; next; }
+		if ($term eq "ICC")             { $config_icc             = 1; next; }
+		if ($term eq "PGCC")            { $config_pgcc            = 1; next; }
+		if ($term eq "XLC")             { $config_xlc             = 1; next; }
+		if ($term eq "MSVC")            { $config_msvc            = 1; next; }
+		if ($term eq "SANITIZE")        { $config_sanitize        = 1; next; }
+		if ($term eq "SHARED")          { $config_shared          = 1; next; }
+		if ($term eq "CCACHE")          { $config_ccache          = 1; next; }
 
 
-    # error conditions
-    die "Unknown option '$term'\n";
+		# error conditions
+		die "Unknown option '$term'\n";
 }
 
 # convert back to a string and save
@@ -365,6 +365,7 @@ if ($config_actc)            { $config_string .= " ACTC"            }
 if ($config_avx512)          { $config_string .= " AVX512"          }
 if ($config_cpudispatch)     { $config_string .= " CPUDISPATCH"     }
 if ($config_cuda)            { $config_string .= " CUDA"            }
+if ($config_cxx11)           { $config_string .= " CXX11"           }
 if ($config_opencl)          { $config_string .= " OPENCL"          }
 if ($config_mpi)             { $config_string .= " MPI"             }
 if ($config_nvenc)           { $config_string .= " NVENC"           }
@@ -407,15 +408,15 @@ if ($config_icc)             { $config_string .= " ICC"             }
 if ($config_pgcc)            { $config_string .= " PGCC"            }
 if ($config_xlc)             { $config_string .= " XLC"             }
 if ($config_msvc)            { $config_string .= " MSVC"            }
-if ($config_purify)          { $config_string .= " PURIFY"          }
+if ($config_sanitize)        { $config_string .= " SANITIZE"        }
 if ($config_shared)          { $config_string .= " SHARED"          }
 if ($config_ccache)          { $config_string .= " CCACHE"          }
 
 if (!open(OUTFILE, ">configure.options")) {
-    print STDERR "** Cannot save parameters to configure.options: $!\n";
+		print STDERR "** Cannot save parameters to configure.options: $!\n";
 } else {
-    print OUTFILE "$config_string\n";
-    close(OUTFILE);
+		print OUTFILE "$config_string\n";
+		close(OUTFILE);
 }
 
 # This is where 'vmd_LINUXAMD64' or 'vmd_SOLARIS2' gets created
@@ -423,7 +424,7 @@ $config_progname = "vmd_${config_arch}";
 
 # Tcl and Python expects shared libraries to be named like this.
 if ($config_shared) {
-  $config_progname = "vmd.so";
+	$config_progname = "vmd.so";
 }
 
 
@@ -445,7 +446,7 @@ $def_title="ON";
 $def_imageviewer="display %s";
 
 # program version number
-$progversion="1.9.4a55";
+$progversion="1.9.4a57";
 
 # text prompt string
 $promptstring="vmd > ";
@@ -510,15 +511,19 @@ $arch_cc          = "cc";
 $arch_ccpp        = "CC";
 $arch_nvcc        = "/usr/local/cuda/bin/nvcc";
 $arch_nvccflags   = "-lineinfo --ptxas-options=-v " . 
-			"-gencode arch=compute_52,code=sm_52 " .
-                    "-gencode arch=compute_60,code=compute_60 " .
-                    "-gencode arch=compute_60,code=sm_60 " .
-                    "-gencode arch=compute_70,code=compute_70 " .
-                    "-gencode arch=compute_70,code=sm_70 " .
-		    "-gencode arch=compute_75,code=sm_75 " .
-                    "-gencode arch=compute_80,code=sm_80 " .
-                    "-gencode arch=compute_86,code=sm_86 " .
-                    "--ftz=true ";
+										"-gencode arch=compute_50,code=compute_50 " .
+										"-gencode arch=compute_50,code=sm_50 " .
+										"-gencode arch=compute_52,code=sm_52 " .
+										"-gencode arch=compute_60,code=compute_60 " .
+										"-gencode arch=compute_60,code=sm_60 " .
+										"-gencode arch=compute_70,code=compute_70 " .
+										"-gencode arch=compute_70,code=sm_70 " .
+										"-gencode arch=compute_75,code=sm_75 " .
+										"-gencode arch=compute_80,code=compute_80 " .
+										"-gencode arch=compute_80,code=sm_80 " .
+										"-gencode arch=compute_86,code=sm_86 " .
+										"-gencode arch=compute_89,code=sm_89 " .
+										"--ftz=true ";
 #                    "-gencode arch=compute_75,code=sm_75 " .
 $arch_gcc         = "gcc";
 $arch_gccpp       = "g++";
@@ -544,7 +549,7 @@ $arch_depend_flag = "";   # used for "make depend" DO NOT SET IT HERE!
 $arch_no_math_float = <<'EOM';
 	-D"expf=exp"  -D"logf=log" -D"sqrtf=sqrt" -D"cosf=cos" -D"sinf=sin" -D"fabsf=fabs" -D"acosf=acos" 
 EOM
-    ;
+		;
 
 # get rid of the trailing newline
 chop($arch_no_math_float);
@@ -560,19 +565,19 @@ $plugin_defines = "";
 @plugin_cu      = ();
 @plugin_ccpp    = ();
 @plugin_h       = ('plugin.h',
-                   'molfile_plugin.h');
+									 'molfile_plugin.h');
 @plugin_extra   = ();
 
 if ($config_staticplugin) {
-  $molfile_dir = "$plugin_dir/$config_arch/molfile";
-  $plugin_include .= " -I$molfile_dir";
-  $plugin_library .= " -L$molfile_dir";
-  $plugin_libs    .= " -lmolfile_plugin";
-  $plugin_defines .= " -DVMDSTATICPLUGINS";
-  @plugin_cc      = ();
-  @plugin_cu      = ();
-  @plugin_ccpp    = ();
-  push (@plugin_h, 'libmolfile_plugin.h');
+	$molfile_dir = "$plugin_dir/$config_arch/molfile";
+	$plugin_include .= " -I$molfile_dir";
+	$plugin_library .= " -L$molfile_dir";
+	$plugin_libs    .= " -lmolfile_plugin";
+	$plugin_defines .= " -DVMDSTATICPLUGINS";
+	@plugin_cc      = ();
+	@plugin_cu      = ();
+	@plugin_ccpp    = ();
+	push (@plugin_h, 'libmolfile_plugin.h');
 }
 
 
@@ -587,9 +592,9 @@ $vulkan_defines     = "-DVMDOPENGL";
 @vulkan_cc          = ();
 @vulkan_cu          = ();
 @vulkan_ccpp        = ('VulkanDisplayDevice.C',
-                       'VulkanRenderer.C');
+											 'VulkanRenderer.C');
 @vulkan_h           = ('VulkanDisplayDevice.h',
-                       'VulkanRenderer.h');
+											 'VulkanRenderer.h');
 @vulkan_extra       = ();
 
 
@@ -603,25 +608,25 @@ $opengl_dep_dir         = "";
 $opengl_dep_include     = "";
 $opengl_dep_library     = "";
 if ($config_opengl_dispatch) {
-  # version of OpenGL libs that can do dispatch, allowing use of 
-  # EGL for window management, but full GL or GLES etc for drawing
-  # as appropriate
-  $opengl_dep_libs        = "-lOpenGL";
+	# version of OpenGL libs that can do dispatch, allowing use of 
+	# EGL for window management, but full GL or GLES etc for drawing
+	# as appropriate
+	$opengl_dep_libs        = "-lOpenGL";
 } else {
-  #$opengl_dep_libs        = "-lGL -lGLU";
-  $opengl_dep_libs        = "-lGL";
+	#$opengl_dep_libs        = "-lGL -lGLU";
+	$opengl_dep_libs        = "-lGL";
 }
 $opengl_dep_defines     = "";
 @opengl_dep_cc          = ();
 @opengl_dep_cu          = ();
 @opengl_dep_ccpp        = ('OpenGLExtensions.C',
-                           'OpenGLRenderer.C',
-                           'OpenGLShader.C',
-                           'OpenGLCache.C');
+													 'OpenGLRenderer.C',
+													 'OpenGLShader.C',
+													 'OpenGLCache.C');
 @opengl_dep_h           = ('OpenGLExtensions.h',
-                           'OpenGLRenderer.h',
-                           'OpenGLShader.h',
-                           'OpenGLCache.h');
+													 'OpenGLRenderer.h',
+													 'OpenGLShader.h',
+													 'OpenGLCache.h');
 @opengl_dep_extra       = ();
 
 
@@ -691,11 +696,11 @@ $sdl_dir         = "$vmd_library_dir/sdl";
 $sdl_include     = "-I$sdl_dir/include";
 $sdl_library     = "-L$sdl_dir/lib_$config_arch";
 if ($config_arch eq "MACOSX" ||
-    $config_arch eq "MACOSXX86" || 
-    $config_arch eq "MACOSXX86_64") {
-  $sdl_libs         = "-lSDL -framework OpenGL -framework AGL";
+		$config_arch eq "MACOSXX86" || 
+		$config_arch eq "MACOSXX86_64") {
+	$sdl_libs         = "-lSDL -framework OpenGL -framework AGL";
 } else {
-  $sdl_libs        = "-lGL -lSDL";
+	$sdl_libs        = "-lGL -lSDL";
 }
 $sdl_defines     = "-DVMDOPENGL -DVMDSDL";
 @sdl_cc          = ();
@@ -711,13 +716,13 @@ $fltkopengl_dir         = "";
 $fltkopengl_include     = "";
 $fltkopengl_library     = "";
 if ($config_arch eq "MACOSX" ||
-    $config_arch eq "MACOSXARM64" || 
-    $config_arch eq "MACOSXX86" || 
-    $config_arch eq "MACOSXX86_64") {
-  $fltkopengl_libs  = "-lfltk_gl -framework OpenGL -framework AGL";
+		$config_arch eq "MACOSXARM64" || 
+		$config_arch eq "MACOSXX86" || 
+		$config_arch eq "MACOSXX86_64") {
+	$fltkopengl_libs  = "-lfltk_gl -framework OpenGL -framework AGL";
 } else {
 #  $fltkopengl_libs        = "-lfltk_gl -lGL -lGLU"; 
-  $fltkopengl_libs        = "-lfltk_gl -lGL"; 
+	$fltkopengl_libs        = "-lfltk_gl -lGL"; 
 }
 $fltkopengl_defines     = "-DVMDOPENGL -DVMDFLTKOPENGL";
 @fltkopengl_cc          = ();
@@ -736,34 +741,34 @@ $fltk_libs        = "-lfltk -lX11";
 #@fltk_cc          = ('forms_ui.c');
 @fltk_cu          = ();
 @fltk_ccpp        = ( 'ColorFltkMenu.C',
-                      'DisplayFltkMenu.C',
-                      'FileChooserFltkMenu.C',
-                      'GraphicsFltkMenu.C',
-                      'SelectionBuilder.C',
-                      'GeometryFltkMenu.C',
-                      'MaterialFltkMenu.C',
-                      'MolBrowser.C',
-                      'RenderFltkMenu.C',
-                      'SaveTrajectoryFltkMenu.C',
-                      'VMDFltkMenu.C',
-                      'MainFltkMenu.C',
-                      'ToolFltkMenu.C',
-                      'frame_selector.C');
+											'DisplayFltkMenu.C',
+											'FileChooserFltkMenu.C',
+											'GraphicsFltkMenu.C',
+											'SelectionBuilder.C',
+											'GeometryFltkMenu.C',
+											'MaterialFltkMenu.C',
+											'MolBrowser.C',
+											'RenderFltkMenu.C',
+											'SaveTrajectoryFltkMenu.C',
+											'VMDFltkMenu.C',
+											'MainFltkMenu.C',
+											'ToolFltkMenu.C',
+											'frame_selector.C');
 @fltk_h           = ('ColorFltkMenu.h',
-                     'DisplayFltkMenu.h',
-                     'FileChooserFltkMenu.h',
-                     'GeometryFltkMenu.h',
-                     'GraphicsFltkMenu.h',
-                     'GraphicsFltkReps.h',
-                     'SelectionBuilder.h',
-                     'MaterialFltkMenu.h',
-                     'MolBrowser.h',
-                     'RenderFltkMenu.h',
-                     'SaveTrajectoryFltkMenu.h',
-                     'VMDFltkMenu.h',
-                     'MainFltkMenu.h',
-                     'ToolFltkMenu.h',
-                     'frame_selector.h');
+										 'DisplayFltkMenu.h',
+										 'FileChooserFltkMenu.h',
+										 'GeometryFltkMenu.h',
+										 'GraphicsFltkMenu.h',
+										 'GraphicsFltkReps.h',
+										 'SelectionBuilder.h',
+										 'MaterialFltkMenu.h',
+										 'MolBrowser.h',
+										 'RenderFltkMenu.h',
+										 'SaveTrajectoryFltkMenu.h',
+										 'VMDFltkMenu.h',
+										 'MainFltkMenu.h',
+										 'ToolFltkMenu.h',
+										 'frame_selector.h');
 @fltk_extra       = ('forms_ui.fd');
 
 ################ Tcl / Tk 
@@ -782,7 +787,7 @@ $stock_tk_include_dir=$ENV{"TK_INCLUDE_DIR"} || "$vmd_library_dir/tk/include";
 $stock_tk_library_dir=$ENV{"TK_LIBRARY_DIR"} || "$vmd_library_dir/tk/lib_$config_arch";
 
 if ($config_tk && !$config_tcl) {
-  die "Error, Tk option requires Tcl\n";
+	die "Error, Tk option requires Tcl\n";
 }
 
 if ($config_tcl) {
@@ -798,44 +803,44 @@ if ($config_tk) { $tcl_libs = "-ltk8.6 -lX11 " . $tcl_libs; }
 @tcl_cc           = ();
 @tcl_cu           = ();
 @tcl_ccpp         = ('ColorInfo.C',
-		     'TclCommands.C',
-		     'TclFastPBC.C',
-		     'TclMDFF.C',
-		     'TclMeasure.C',
-		     'TclMolInfo.C',
-		     'TclTextInterp.C',
-		     'TclVec.C',
-		     'TclGraphics.C', 
-		     'TclGraphLayout.C', 
-		     'TclSegmentation.C',
-		     'TclVolMap.C',
-		     'TclVoltool.C',
-		     'cmd_animate.C',
-                     'cmd_collab.C',
-		     'cmd_color.C',
-		     'cmd_display.C',
-		     'cmd_imd.C',
-		     'cmd_label.C',
-		     'cmd_material.C',
-		     'cmd_menu.C',
-		     'cmd_mobile.C',
-		     'cmd_mol.C',
-		     'cmd_mouse.C',
-		     'cmd_parallel.C',
-		     'cmd_plugin.C',
-		     'cmd_profile.C',
-		     'cmd_render.C',
-		     'cmd_spaceball.C',
-		     'cmd_tool.C',
-		     'cmd_trans.C',
-		     'cmd_user.C',
-		     'cmd_util.C',
-		     'cmd_videostream.C',
-		     'cmd_vmdbench.C',
-		     'tcl_commands.C');
+				 'TclCommands.C',
+				 'TclFastPBC.C',
+				 'TclMDFF.C',
+				 'TclMeasure.C',
+				 'TclMolInfo.C',
+				 'TclTextInterp.C',
+				 'TclVec.C',
+				 'TclGraphics.C', 
+				 'TclGraphLayout.C', 
+				 'TclSegmentation.C',
+				 'TclVolMap.C',
+				 'TclVoltool.C',
+				 'cmd_animate.C',
+										 'cmd_collab.C',
+				 'cmd_color.C',
+				 'cmd_display.C',
+				 'cmd_imd.C',
+				 'cmd_label.C',
+				 'cmd_material.C',
+				 'cmd_menu.C',
+				 'cmd_mobile.C',
+				 'cmd_mol.C',
+				 'cmd_mouse.C',
+				 'cmd_parallel.C',
+				 'cmd_plugin.C',
+				 'cmd_profile.C',
+				 'cmd_render.C',
+				 'cmd_spaceball.C',
+				 'cmd_tool.C',
+				 'cmd_trans.C',
+				 'cmd_user.C',
+				 'cmd_util.C',
+				 'cmd_videostream.C',
+				 'cmd_vmdbench.C',
+				 'tcl_commands.C');
 @tcl_h            = ('TclCommands.h',
-		     'TclTextInterp.h',
-		     'tcl_commands.h');
+				 'TclTextInterp.h',
+				 'tcl_commands.h');
 @tcl_extra        = ();
 }
 #		     'cmd_volgradient.C',
@@ -852,9 +857,9 @@ if ($config_tcl) {
 # This redirects all console output to log all output to a tk
 # text windget (ideally tkcon) if it is available.
 if ($config_tkcon) { 
-  $tcl_defines .= " -DVMDTKCON"; 
-  push (@tk_cc, 'vmdconsole.c');
-  push (@tk_h,  'vmdconsole.h');
+	$tcl_defines .= " -DVMDTKCON"; 
+	push (@tk_cc, 'vmdconsole.c');
+	push (@tk_h,  'vmdconsole.h');
 }
 
 
@@ -863,17 +868,17 @@ if ($config_tkcon) {
 # This allows VMD to execute functions from the colvars module
 # http://colvars.github.io/
 if ($config_colvars) {
-  if (!$config_tcl) {
-    die "Error, COLVARS option requires Tcl\n";
-  }
+	if (!$config_tcl) {
+		die "Error, COLVARS option requires Tcl\n";
+	}
 
-  our ( $colvars_defines );
-  our ( @colvars_cc );
-  our ( @colvars_cu );
-  our ( @colvars_ccpp );
-  our ( @colvars_h );
+	our ( $colvars_defines );
+	our ( @colvars_cc );
+	our ( @colvars_cu );
+	our ( @colvars_ccpp );
+	our ( @colvars_h );
 
-  require "./src/colvars_files.pl";
+	require "./src/colvars_files.pl";
 }
 
 
@@ -887,30 +892,30 @@ $imd_defines        = "-DVMDIMD";
 @imd_cu             = ();
 if ($config_pthreads) {
 @imd_ccpp           = ('IMDMgr.C',
-                       'IMDSim.C',
-		       'IMDSimThread.C',
-		       'CmdIMD.C',
-                       'imd.C' 
-                      );
+											 'IMDSim.C',
+					 'IMDSimThread.C',
+					 'CmdIMD.C',
+											 'imd.C' 
+											);
 @imd_h              = ('imd.h',
-                       'IMDMgr.h',
-                       'IMDSim.h',
-		       'IMDSimThread.h',
-	               'CmdIMD.h'
-                      ); 
+											 'IMDMgr.h',
+											 'IMDSim.h',
+					 'IMDSimThread.h',
+								 'CmdIMD.h'
+											); 
 } else {
 @imd_ccpp           = ('IMDMgr.C',
-                       'IMDSim.C',
-		       'IMDSimBlocking.C',
-		       'CmdIMD.C',
-                       'imd.C' 
-                      );
+											 'IMDSim.C',
+					 'IMDSimBlocking.C',
+					 'CmdIMD.C',
+											 'imd.C' 
+											);
 @imd_h              = ('imd.h',
-                       'IMDMgr.h',
-                       'IMDSim.h',
-		       'IMDSimBlocking.h',
-	               'CmdIMD.h'
-                      ); 
+											 'IMDMgr.h',
+											 'IMDSim.h',
+					 'IMDSimBlocking.h',
+								 'CmdIMD.h'
+											); 
 }
 
 
@@ -922,11 +927,11 @@ $system_dir           = "";
 $system_include       = "-I.";
 $system_library       = "";
 if ( $config_gcc ) {
-  ## Note: some old commercial versions of Unix require -ll for lex internals
-  ## now that we've been using flex for years, -ll should be moot.
-  $system_libs        = "-lm";
+	## Note: some old commercial versions of Unix require -ll for lex internals
+	## now that we've been using flex for years, -ll should be moot.
+	$system_libs        = "-lm";
 } else {
-  $system_libs        = "-lm";
+	$system_libs        = "-lm";
 }
 @system_cc             = ();
 @system_cu             = ();
@@ -973,39 +978,39 @@ $cpudispatch_libs          = "";
 
 
 if ($config_arch eq "LINUXARM64" || $config_arch eq "MACOSXARM64") {
-  # ARM NEON
-  $cpudispatch_defines     = "-DVMDCPUDISPATCH -DVMDUSENEON";
-  @cpudispatch_ccpp_neon   = (
-                              'Orbital_NEON.C',
-                              'QuickSurf_NEON.C',
-                              'util_simd_NEON.C',
-                              );
+	# ARM NEON
+	$cpudispatch_defines     = "-DVMDCPUDISPATCH -DVMDUSENEON";
+	@cpudispatch_ccpp_neon   = (
+															'Orbital_NEON.C',
+															'QuickSurf_NEON.C',
+															'util_simd_NEON.C',
+															);
 
-  # ARM SVE 
-#  XXX currently requires ARM HPC toolkit/compilers, 
-#      not found within normal tools yet
-#  if ($config_arch eq "LINUXARM64") {
-#    @cpudispatch_ccpp_sve    .= (
-#                                'Orbital_SVE.C',
-#                                );
-#  }
+	# ARM SVE 
+	if ($config_arch eq "LINUXARM64") {
+		@cpudispatch_ccpp_sve    = (
+																'Orbital_SVE.C',
+																'util_simd_SVE.C',
+																);
+	}
+
 } elsif ($config_arch eq "LINUXAMD64" || $config_arch eq "WIN64" || $config_arch eq "MACOSXX86_64") {
-  # Intel x86, AVX, AVX2, AVX-512
-  $cpudispatch_defines     = "-DVMDCPUDISPATCH -DVMDUSEAVX -DVMDUSEAVX2 -DVMDUSEAVX512";
-  @cpudispatch_ccpp_avx    = (
-                              'util_simd_AVX.C',
-                              );
-  @cpudispatch_ccpp_avx2   = (
-                              'Orbital_AVX2.C',
-                              'QuickSurf_AVX2.C',
-                              'util_simd_AVX2.C',
-                              );
-  @cpudispatch_ccpp_avx512 = (
-                              'Orbital_AVX512.C',
-                              );
-  @cpudispatch_ccpp_avx512er = (
-                              'Orbital_AVX512ER.C',
-                              );
+	# Intel x86, AVX, AVX2, AVX-512
+	$cpudispatch_defines     = "-DVMDCPUDISPATCH -DVMDUSEAVX -DVMDUSEAVX2 -DVMDUSEAVX512";
+	@cpudispatch_ccpp_avx    = (
+															'util_simd_AVX.C',
+															);
+	@cpudispatch_ccpp_avx2   = (
+															'Orbital_AVX2.C',
+															'QuickSurf_AVX2.C',
+															'util_simd_AVX2.C',
+															);
+	@cpudispatch_ccpp_avx512 = (
+															'Orbital_AVX512.C',
+															);
+	@cpudispatch_ccpp_avx512er = (
+															'Orbital_AVX512ER.C',
+															);
 }
 
 
@@ -1021,28 +1026,28 @@ $cuda_library     = "-L$cuda_dir/lib64";
 $cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
 @cuda_cc          = ();
 @cuda_cu	  = ('msmpot_cuda.cu',
-                     'msmpot_cuda_latcut.cu',
-                     'msmpot_cuda_shortrng.cu',
-                     'CUDABench.cu',
-                     'CUDAClearDevice.cu',
-                     'CUDADispCmds.cu',
-                     'CUDAFastPBC.cu',
-                     'CUDAGaussianBlur.cu',
-                     'CUDAMarchingCubes.cu',
-                     'CUDAMDFF.cu',
-                     'CUDAMeasureRDF.cu',
-                     'CUDAMeasureQCP.cu',
-                     'CUDAWrapNVML.cu',
-                     'CUDAOrbital.cu',
-                     'CUDAParPrefixOps.cu',
-                     'CUDAQuickSurf.cu',
-                     'CUDASegmentation.cu',
-                     'CUDASpatialSearch.cu',
-                     'CUDASort.cu',
-                     'CUDAUtil.cu',
-                     'CUDAVolCPotential.cu',
-                     'CUDAVolMapCreateILS.cu',
-                     'CUDAWatershed.cu');
+										 'msmpot_cuda_latcut.cu',
+										 'msmpot_cuda_shortrng.cu',
+										 'CUDABench.cu',
+										 'CUDAClearDevice.cu',
+										 'CUDADispCmds.cu',
+										 'CUDAFastPBC.cu',
+										 'CUDAGaussianBlur.cu',
+										 'CUDAMarchingCubes.cu',
+										 'CUDAMDFF.cu',
+										 'CUDAMeasureRDF.cu',
+										 'CUDAMeasureQCP.cu',
+										 'CUDAWrapNVML.cu',
+										 'CUDAOrbital.cu',
+										 'CUDAParPrefixOps.cu',
+										 'CUDAQuickSurf.cu',
+										 'CUDASegmentation.cu',
+										 'CUDASpatialSearch.cu',
+										 'CUDASort.cu',
+										 'CUDAUtil.cu',
+										 'CUDAVolCPotential.cu',
+										 'CUDAVolMapCreateILS.cu',
+										 'CUDAWatershed.cu');
 @cuda_ccpp        = ();
 @cuda_h           = ('CUDAKernels.h');
 @cuda_extra       = ();
@@ -1062,8 +1067,8 @@ $opencl_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lOpenCL";
 @opencl_cc          = ();
 @opencl_cu          = ();
 @opencl_ccpp	    = ('OpenCLUtils.C',
-                       'OpenCLOrbital.C',
-                       'OpenCLVolCPotential.C');
+											 'OpenCLOrbital.C',
+											 'OpenCLVolCPotential.C');
 @opencl_h           = ('OpenCLKernels.h');
 @opencl_extra       = ();
 
@@ -1149,42 +1154,42 @@ $nvtx_libs        = ""; # CUDA >= 10 have NVTX V3, no -lnvToolsExt
 # OPTIONAL COMPONENT: Khronos ANARI acclerated sci-vis rendering support
 # This may be commented out if not required.
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libanari_defines     = "-DVMDLIBANARI ";  # XXX batch RT only at present
+	$libanari_defines     = "-DVMDLIBANARI ";  # XXX batch RT only at present
 } else {
-  if ($config_opengl) {
-    $libanari_defines   = "-DVMDLIBANARI -DVMDANARI_INTERACTIVE_OPENGL";
-  } else {
-    $libanari_defines   = "-DVMDLIBANARI ";
-  }
+	if ($config_opengl) {
+		$libanari_defines   = "-DVMDLIBANARI -DVMDANARI_INTERACTIVE_OPENGL";
+	} else {
+		$libanari_defines   = "-DVMDLIBANARI ";
+	}
 }
 
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libanari_dir         = "/Users/johns/vmd/lib/anari-0.0";
-  $libanari_include     = "-I$libanari_dir/include -I$libanari_dir/anari/include ";
-  $libanari_library     = "-L$libanari_dir/lib64 ";
-  $libanari_libs        = "-lanari ";
+	$libanari_dir         = "/Users/johns/vmd/lib/anari-0.0";
+	$libanari_include     = "-I$libanari_dir/include -I$libanari_dir/anari/include ";
+	$libanari_library     = "-L$libanari_dir/lib64 ";
+	$libanari_libs        = "-lanari ";
 } else {
-  $libanari_dir         = "/usr/local/anari-0.0";
-  $libanari_include     = "-I$libanari_dir/include -I$libanari_dir/anari/include ";
-  $libanari_library     = "-L$libanari_dir/lib ";
-  $libanari_libs        = "-lanari ";
+	$libanari_dir         = "/usr/local/anari-1.0";
+	$libanari_include     = "-I$libanari_dir/include -I$libanari_dir/anari/include ";
+	$libanari_library     = "-L$libanari_dir/lib64 ";
+	$libanari_libs        = "-lanari ";
 }
 
 # ANARI, OptiX, and OSPRay renderers use the Tachyon glwin code,
 # so we have to make sure we don't build/link it twice
 if ($config_liboptix) {
-  @libanari_cc          = ();
+	@libanari_cc          = ();
 } else {
-  @libanari_cc          = ('glwin.c');
+	@libanari_cc          = ('glwin.c');
 }
 @libanari_cu          = ();
 @libanari_ptx         = ();
 @libanari_ccpp        = ('ANARIDisplayDevice.C',
-                         'ANARIRenderer.C'
-                         );
+												 'ANARIRenderer.C'
+												 );
 @libanari_h           = ('ANARIDisplayDevice.h',
-                         'ANARIRenderer.h',
-                         );
+												 'ANARIRenderer.h',
+												 );
 
 
 ################ LIBGELATO
@@ -1200,17 +1205,17 @@ $libgelato_libs        = "-lgelato";
 @libgelato_cc          = ();
 @libgelato_cu          = ();
 @libgelato_ccpp        = ('LibGelatoDisplayDevice.C'
-                      );
+											);
 @libgelato_h           = ('LibGelatoDisplayDevice.h',
-                      );
+											);
 
 ################ LIBOPTIX
 # OPTIONAL COMPONENT: Built-in NVIDIA OptiX rendering support 
 # This may be commented out if not required.
 if ($config_opengl) {
-  $liboptix_defines     = "-DVMDLIBOPTIX -DVMDOPTIX_INTERACTIVE_OPENGL -DVMDOPTIXRTRT";
+	$liboptix_defines     = "-DVMDLIBOPTIX -DVMDOPTIX_INTERACTIVE_OPENGL -DVMDOPTIXRTRT";
 } else {
-  $liboptix_defines     = "-DVMDLIBOPTIX ";
+	$liboptix_defines     = "-DVMDLIBOPTIX ";
 }
 
 # Standard builds
@@ -1252,109 +1257,109 @@ $liboptix_include     = "-I$liboptix_dir/include -I$cuda_dir/include";
 $liboptix_library     = "-L$liboptix_dir/lib64";
 $liboptix_libs        = "-loptixu -loptix";
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  @liboptix_cc          = ();  # XXX batch RT only at present
+	@liboptix_cc          = ();  # XXX batch RT only at present
 } else {
-  @liboptix_cc          = ('glwin.c');
+	@liboptix_cc          = ('glwin.c');
 }
 @liboptix_cu          = ();
 @liboptix_ptx         = ('OptiXShaders.ptx',
-                      );
+											);
 @liboptix_ccpp        = ('OptiXDisplayDevice.C',
-                         'OptiXRenderer.C'
-                      );
+												 'OptiXRenderer.C'
+											);
 @liboptix_h           = ('OptiXDisplayDevice.h',
-                         'OptiXRenderer.h',
-                      );
+												 'OptiXRenderer.h',
+											);
 
 
 ################ LIBOSPRAY
 # OPTIONAL COMPONENT: Built-in Intel OSPRay 1.x rendering support 
 # This may be commented out if not required.
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libospray_defines     = "-DVMDLIBOSPRAY ";  # XXX batch RT only at present
+	$libospray_defines     = "-DVMDLIBOSPRAY ";  # XXX batch RT only at present
 } else {
-  if ($config_opengl) {
-    $libospray_defines     = "-DVMDLIBOSPRAY -DVMDOSPRAY_INTERACTIVE_OPENGL";
-  } else {
-    $libospray_defines     = "-DVMDLIBOSPRAY ";
-  }
+	if ($config_opengl) {
+		$libospray_defines     = "-DVMDLIBOSPRAY -DVMDOSPRAY_INTERACTIVE_OPENGL";
+	} else {
+		$libospray_defines     = "-DVMDLIBOSPRAY ";
+	}
 }
 
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libospray_dir         = "/Users/johns/vmd/lib/ospray-1.8.5.x86_64.macosx";
-  $libospray_include     = "-I$libospray_dir/include -I$libospray_dir/ospray/include ";
-  $libospray_library     = "-L$libospray_dir/lib ";
-  $libospray_libs        = "-lospray -lospray_common -lembree3.3 -ltbb -ltbbmalloc ";
+	$libospray_dir         = "/Users/johns/vmd/lib/ospray-1.8.5.x86_64.macosx";
+	$libospray_include     = "-I$libospray_dir/include -I$libospray_dir/ospray/include ";
+	$libospray_library     = "-L$libospray_dir/lib ";
+	$libospray_libs        = "-lospray -lospray_common -lembree3.3 -ltbb -ltbbmalloc ";
 } else {
 #   $libospray_dir         = "/usr/local/ospray-1.7.0.x86_64.linux";
-  $libospray_dir         = "/usr/local/ospray-1.8.5.x86_64.linux";
-  $libospray_include     = "-I$libospray_dir/include -I$libospray_dir/ospray/include ";
-  $libospray_library     = "-L$libospray_dir/lib ";
-  $libospray_libs        = "-lospray -lospray_common -lembree -ltbb -ltbbmalloc ";
+	$libospray_dir         = "/usr/local/ospray-1.8.5.x86_64.linux";
+	$libospray_include     = "-I$libospray_dir/include -I$libospray_dir/ospray/include ";
+	$libospray_library     = "-L$libospray_dir/lib ";
+	$libospray_libs        = "-lospray -lospray_common -lembree -ltbb -ltbbmalloc ";
 }
 
 
 # Both OptiX and OSPRay renderers use the Tachyon glwin code, 
 # so we have to make sure we don't build/link it twice
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  @libospray_cc          = ();  # XXX batch RT only at present
+	@libospray_cc          = ();  # XXX batch RT only at present
 } else {
-  if ($config_liboptix) {
-    @libospray_cc          = ();
-  } else {
-    @libospray_cc          = ('glwin.c');
-  }
+	if ($config_liboptix) {
+		@libospray_cc          = ();
+	} else {
+		@libospray_cc          = ('glwin.c');
+	}
 }
 @libospray_cu          = ();
 @libospray_ptx         = ();
 @libospray_ccpp        = ('OSPRayDisplayDevice.C',
-                          'OSPRayRenderer.C'
-                         );
+													'OSPRayRenderer.C'
+												 );
 @libospray_h           = ('OSPRayDisplayDevice.h',
-                          'OSPRayRenderer.h',
-                         );
+													'OSPRayRenderer.h',
+												 );
 
 
 ################ LIBOSPRAY2
 # OPTIONAL COMPONENT: Built-in Intel OSPRay 2.x rendering support
 # This may be commented out if not required.
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libospray2_defines     = "-DVMDLIBOSPRAY ";  # XXX batch RT only at present
+	$libospray2_defines     = "-DVMDLIBOSPRAY ";  # XXX batch RT only at present
 } else {
-  if ($config_opengl) {
-    $libospray2_defines     = "-DVMDLIBOSPRAY2 -DVMDOSPRAY_INTERACTIVE_OPENGL";
-  } else {
-    $libospray2_defines     = "-DVMDLIBOSPRAY2 ";
-  }
+	if ($config_opengl) {
+		$libospray2_defines     = "-DVMDLIBOSPRAY2 -DVMDOSPRAY_INTERACTIVE_OPENGL";
+	} else {
+		$libospray2_defines     = "-DVMDLIBOSPRAY2 ";
+	}
 }
 
 if ($config_arch eq "MACOSXARM64" || $config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-  $libospray2_dir         = "/Users/johns/vmd/lib/ospray-2.5.0.x86_64.macosx";
-  $libospray2_include     = "-I$libospray2_dir/include -I$libospray2_dir/ospray/include ";
-  $libospray2_library     = "-L$libospray2_dir/lib ";
-  $libospray2_libs        = "-lospray -lospcommon -lembree3.3 -ltbb -ltbbmalloc ";
+	$libospray2_dir         = "/Users/johns/vmd/lib/ospray-2.8.0.x86_64.macosx";
+	$libospray2_include     = "-I$libospray2_dir/include -I$libospray2_dir/ospray/include ";
+	$libospray2_library     = "-L$libospray2_dir/lib ";
+	$libospray2_libs        = "-lospray -lospcommon -lembree3.3 -ltbb -ltbbmalloc ";
 } else {
-  $libospray2_dir         = "/usr/local/ospray-2.5.0.x86_64.linux";
-  $libospray2_include     = "-I$libospray2_dir/include -I$libospray2_dir/ospray/include ";
-  $libospray2_library     = "-L$libospray2_dir/lib ";
-  $libospray2_libs        = "-lospray -lospcommon -lembree3 -ltbb -ltbbmalloc ";
+	$libospray2_dir         = "/usr/local/ospray-2.8.0.x86_64.linux";
+	$libospray2_include     = "-I$libospray2_dir/include -I$libospray2_dir/ospray/include ";
+	$libospray2_library     = "-L$libospray2_dir/lib ";
+	$libospray2_libs        = "-lospray -lospcommon -lembree3 -ltbb -ltbbmalloc ";
 }
 
 # Both OptiX and OSPRay renderers use the Tachyon glwin code,
 # so we have to make sure we don't build/link it twice
 if ($config_liboptix) {
-  @libospray2_cc          = ();
+	@libospray2_cc          = ();
 } else {
-  @libospray2_cc          = ('glwin.c');
+	@libospray2_cc          = ('glwin.c');
 }
 @libospray2_cu          = ();
 @libospray2_ptx         = ();
 @libospray2_ccpp        = ('OSPRay2DisplayDevice.C',
-                          'OSPRay2Renderer.C'
-                         );
+													'OSPRay2Renderer.C'
+												 );
 @libospray2_h           = ('OSPRay2DisplayDevice.h',
-                          'OSPRay2Renderer.h',
-                         );
+													'OSPRay2Renderer.h',
+												 );
 
 
 ################ LIBTACHYON
@@ -1368,19 +1373,19 @@ $libtachyon_libs        = "-ltachyon";
 @libtachyon_cc          = ();
 @libtachyon_cu          = ();
 @libtachyon_ccpp        = ('LibTachyonDisplayDevice.C'
-                      );
+											);
 @libtachyon_h           = ('LibTachyonDisplayDevice.h',
-                      );
+											);
 
 ################ LIBPNG
 # OPTIONAL COMPONENT: PNG image I/O
 # This may be commented out if not required.
 if ( $config_libpng && !$config_zlib) {
-  die "LIBPNG option requires ZLIB!";
+	die "LIBPNG option requires ZLIB!";
 }
 $libpng_defines     = "-DVMDLIBPNG";
 $libpng_dir         = "/usr/include/libpng";
-$libpng_include     = "-I$libpng_dir/include";
+$libpng_include     = "-I$libpng_dir";
 $libpng_library     = "-L$libpng_dir/lib_$config_arch";
 $libpng_libs        = "-lpng16";
 @libpng_cc          = ();
@@ -1499,13 +1504,13 @@ $vrpn_libs           = "-lvrpn -lquat";
 @vrpn_cc             = ();
 @vrpn_cu             = ();
 @vrpn_ccpp           = ('P_VRPNTracker.C',
-                        'P_VRPNButtons.C',
-                        'P_VRPNFeedback.C',
-                        'P_RotateTool.C');
+												'P_VRPNButtons.C',
+												'P_VRPNFeedback.C',
+												'P_RotateTool.C');
 @vrpn_h              = ('P_VRPNTracker.h',
-                        'P_VRPNButtons.h',
-                        'P_VRPNFeedback.h',
-                        'P_RotateTool.h'); 
+												'P_VRPNButtons.h',
+												'P_VRPNFeedback.h',
+												'P_RotateTool.h'); 
 @vrpn_extra          = ();
 
 #######################
@@ -1515,7 +1520,7 @@ $vrpn_libs           = "-lvrpn -lquat";
 #	result in unique CAVE objects being used in the program.
 #######################
 if ( $config_cave && !$config_opengl) {
-  die "CAVE option requires OPENGL!";
+	die "CAVE option requires OPENGL!";
 }
 $cave_defines       = "-DVMDCAVE";
 $cave_dir           = "$vmd_library_dir/cave";
@@ -1525,17 +1530,17 @@ $cave_libs          = "-lcave";
 @cave_cc            = ();
 @cave_cu            = ();
 @cave_ccpp          = ('CaveDisplayDevice.C',
-		       'CaveScene.C',
-		       'CaveRoutines.C',
-		       'P_CaveTracker.C',
-		       'P_CaveButtons.C'
-		       );
+					 'CaveScene.C',
+					 'CaveRoutines.C',
+					 'P_CaveTracker.C',
+					 'P_CaveButtons.C'
+					 );
 @cave_h             = ('CaveDisplayDevice.h',
-		       'CaveRoutines.h',
-		       'CaveScene.h',
-		       'P_CaveTracker.h',
-		       'P_CaveButtons.h'
-		       );
+					 'CaveRoutines.h',
+					 'CaveScene.h',
+					 'P_CaveTracker.h',
+					 'P_CaveButtons.h'
+					 );
 @cave_extra        = ();
 
 
@@ -1546,7 +1551,7 @@ $cave_libs          = "-lcave";
 #	result in unique FreeVR objects being used in the program.
 #######################
 if ( $config_freevr && !$config_opengl) {
-  die "FREEVR option requires OPENGL!";
+	die "FREEVR option requires OPENGL!";
 }
 $freevr_defines     = "-DVMDFREEVR";
 $freevr_dir         = "$vmd_library_dir/freevr";
@@ -1558,37 +1563,37 @@ $freevr_library     = "-L$freevr_library_dir";
 
 # choose which library to link against
 if (($config_arch eq "LINUX") || ($config_arch eq "LINUXAMD64")) {
-  if ($config_pthreads) {
-    if ($config_lp64 || ($config_arch eq "LINUXAMD64")) {
-      $freevr_libs        = "-lfreevr_64 -lXi";
-    } else {
-      $freevr_libs        = "-lfreevr_32 -lXi";
-    }
-  } else {
-    if ($config_lp64 || ($config_arch eq "LINUXAMD64")) {
-      $freevr_libs        = "-lfreevr_64 -lXi";
-    } else {
-      $freevr_libs        = "-lfreevr_32 -lXi";
-    }
-  }
+	if ($config_pthreads) {
+		if ($config_lp64 || ($config_arch eq "LINUXAMD64")) {
+			$freevr_libs        = "-lfreevr_64 -lXi";
+		} else {
+			$freevr_libs        = "-lfreevr_32 -lXi";
+		}
+	} else {
+		if ($config_lp64 || ($config_arch eq "LINUXAMD64")) {
+			$freevr_libs        = "-lfreevr_64 -lXi";
+		} else {
+			$freevr_libs        = "-lfreevr_32 -lXi";
+		}
+	}
 } else {
-  $freevr_libs        = "-lfreevr -lXi";
+	$freevr_libs        = "-lfreevr -lXi";
 }
 
 @freevr_cc          = ();
 @freevr_cu          = ();
 @freevr_ccpp        = ('FreeVRDisplayDevice.C',
-		       'FreeVRScene.C',
-		       'FreeVRRoutines.C',
-		       'P_FreeVRTracker.C',
-		       'P_FreeVRButtons.C'
-		       );
+					 'FreeVRScene.C',
+					 'FreeVRRoutines.C',
+					 'P_FreeVRTracker.C',
+					 'P_FreeVRButtons.C'
+					 );
 @freevr_h           = ('FreeVRDisplayDevice.h',
-		       'FreeVRRoutines.h',
-		       'FreeVRScene.h',
-		       'P_FreeVRTracker.h',
-		       'P_FreeVRButtons.h'
-		       );
+					 'FreeVRRoutines.h',
+					 'FreeVRScene.h',
+					 'P_FreeVRTracker.h',
+					 'P_FreeVRButtons.h'
+					 );
 @freevr_extra      = ();
 
 
@@ -1665,55 +1670,55 @@ $pthreads_libs     = "-lpthread";
 # location of Python library and include file.
 # If left blank, standard system  directories will be searched.
 if ($ENV{_CONDA_ROOT}) {
-  $conda_root=$ENV{"_CONDA_ROOT"};
-  print "using _CONDA_ROOT for Python 3.7: $conda_root\n";
-  $stock_python_include_dir=$ENV{"PYTHON_INCLUDE_DIR"} || "$conda_root/include/python3.7m";
-  $stock_python_library_dir=$ENV{"PYTHON_LIBRARY_DIR"} || "$conda_root/lib/python3.7/config-3.7m-x86_64-linux-gnu";
-  $stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$conda_root/lib/python3.7/site-packages/numpy/core/include/numpy";
-  $stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$conda_root/lib/python-3.7/site-packages/numpy/core/include";
-  $python_libs        = "-fno-lto -lpython3.7m -lpthread";
+	$conda_root=$ENV{"_CONDA_ROOT"};
+	print "using _CONDA_ROOT for Python 3.7: $conda_root\n";
+	$stock_python_include_dir=$ENV{"PYTHON_INCLUDE_DIR"} || "$conda_root/include/python3.7m";
+	$stock_python_library_dir=$ENV{"PYTHON_LIBRARY_DIR"} || "$conda_root/lib/python3.7/config-3.7m-x86_64-linux-gnu";
+	$stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$conda_root/lib/python3.7/site-packages/numpy/core/include/numpy";
+	$stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$conda_root/lib/python-3.7/site-packages/numpy/core/include";
+	$python_libs        = "-fno-lto -lpython3.7m -lpthread";
 } else {
 #  $stock_python_include_dir=$ENV{"PYTHON_INCLUDE_DIR"} || "/usr/local/include";
 #  $stock_python_library_dir=$ENV{"PYTHON_LIBRARY_DIR"} || "/usr/local/lib";
-  $stock_python_include_dir=$ENV{"PYTHON_INCLUDE_DIR"} || "$vmd_library_dir/python/lib_$config_arch/include/python2.5";
-  $stock_python_library_dir=$ENV{"PYTHON_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/config";
+	$stock_python_include_dir=$ENV{"PYTHON_INCLUDE_DIR"} || "$vmd_library_dir/python/lib_$config_arch/include/python2.5";
+	$stock_python_library_dir=$ENV{"PYTHON_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/config";
 
 #  $stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "/usr/local/include";
 #  $stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "/usr/local/lib";
-  $stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$vmd_library_dir/numpy/lib_$config_arch/include";
-  $stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/site-packages/numpy/core/include";
-  $python_libs        = "-lpython3.8 -lpthread";
+	$stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$vmd_library_dir/numpy/lib_$config_arch/include";
+	$stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/site-packages/numpy/core/include";
+	$python_libs        = "-lpython3.10 -lpthread";
 }
 
 $python_defines     = "-DVMDPYTHON";
 $python_include     = "-I$stock_python_include_dir -I$stock_numpy_include_dir -I$stock_numpy_library_dir";
 $python_library     = "-L$stock_python_library_dir";
 @python_h           = ('PythonTextInterp.h',
-                       'VMDTkinterMenu.h',
-		       'py_commands.h',
-		       'py_molecule.h');
+											 'VMDTkinterMenu.h',
+					 'py_commands.h',
+					 'py_molecule.h');
 @python_ccpp        = ('PythonTextInterp.C',
-                       'VMDTkinterMenu.C',
-		       'py_animate.C',
-		       'py_atomsel.C',
-		       'py_selection.C',
-		       'py_axes.C',
-		       'py_color.C',
-		       'py_commands.C',
-		       'py_display.C',
-		       'py_graphics.C',
-		       'py_imd.C',
-		       'py_label.C',
-		       'py_material.C',
-                       'py_measure.C',
-                       'py_menu.C',
-		       'py_molecule.C',
-		       'py_molrep.C',
-	               'py_mouse.C',
-		       'py_render.C',
-		       'py_topo.C',
-		       'py_trans.C',
-                       'py_vmd.C');
+											 'VMDTkinterMenu.C',
+					 'py_animate.C',
+					 'py_atomsel.C',
+					 'py_selection.C',
+					 'py_axes.C',
+					 'py_color.C',
+					 'py_commands.C',
+					 'py_display.C',
+					 'py_graphics.C',
+					 'py_imd.C',
+					 'py_label.C',
+					 'py_material.C',
+											 'py_measure.C',
+											 'py_menu.C',
+					 'py_molecule.C',
+					 'py_molrep.C',
+								 'py_mouse.C',
+					 'py_render.C',
+					 'py_topo.C',
+					 'py_trans.C',
+											 'py_vmd.C');
 
 
 ###################
@@ -1722,7 +1727,7 @@ $python_library     = "-L$stock_python_library_dir";
 
 # Numeric requires Python
 if ( $config_numeric && !$config_python) {
-  die "NUMPY option requires PYTHON!";
+	die "NUMPY option requires PYTHON!";
 }
 $numeric_defines   = "-DVMDNUMPY";
 $numeric_include   = "";
@@ -1738,7 +1743,7 @@ $numeric_libs      = "";
 # allow passing build flags from rpmbuild
 $rpm_optflags      = "";
 if ( $config_rpm ) {
-   $rpm_optflags   = "$ENV{RPM_OPT_FLAGS}";
+	 $rpm_optflags   = "$ENV{RPM_OPT_FLAGS}";
 }
 
 ################### standard sources
@@ -1747,342 +1752,343 @@ $vmd_include       = "$tcl_include";
 $vmd_library       = "$tcl_library";
 $vmd_libs          = "$tcl_libs";
 
-@vmd_cc         = ('hash.c',
-                   'inthash.c',
-                   'intstack.c',
-                   'ptrstack.c',
-                   'msmpot.c',
-                   'msmpot_compute.c',
-                   'msmpot_cubic.c',
-                   'msmpot_setup.c',
-                   'vmdsock.c',
-                   'vmddlopen.c',
-                   'vmdfsinfo.c',
-                   'pcre.c',
-                   'fitrms.c',
-                   @tcl_cc,
-                   @tk_cc);
+@vmd_cc         = ('c_compiler.c',
+									 'hash.c',
+									 'inthash.c',
+									 'intstack.c',
+									 'ptrstack.c',
+									 'msmpot.c',
+									 'msmpot_compute.c',
+									 'msmpot_cubic.c',
+									 'msmpot_setup.c',
+									 'vmdsock.c',
+									 'vmddlopen.c',
+									 'vmdfsinfo.c',
+									 'pcre.c',
+									 'fitrms.c',
+									 @tcl_cc,
+									 @tk_cc);
 
 @vmd_ccpp	= (
-		   'androidvmdstart.C', 
-		   'Animation.C', 
-		   'ArtDisplayDevice.C', 
-		   'AtomColor.C', 
-                   'AtomParser.C', 
-                   'AtomLexer.C', 
-		   'AtomRep.C', 
-		   'AtomSel.C', 
-		   'Axes.C', 
-		   'BaseMolecule.C', 
-		   'Benchmark.C',
-                   'BondSearch.C', 
-		   'CmdAnimate.C', 
-		   'CmdColor.C', 
-		   'CmdDisplay.C', 
-		   'CmdLabel.C', 
-                   'CmdMaterial.C',
-		   'CmdMenu.C', 
-		   'CmdMol.C', 
-		   'CmdRender.C', 
-		   'CmdTrans.C', 
-		   'CommandQueue.C', 
-		   'CoorPluginData.C',
-		   'CUDAAccel.C', 
-		   'DisplayDevice.C', 
-		   'Displayable.C', 
-		   'DisplayRocker.C', 
-		   'DispCmds.C', 
-		   'DrawMolecule.C', 
-		   'DrawMolItem.C', 
-		   'DrawMolItem2.C', 
-		   'DrawMolItemRibbons.C', 
-		   'DrawMolItemMSMS.C', 
-		   'DrawMolItemNanoShaper.C', 
-		   'DrawMolItemRings.C', 
-		   'DrawMolItemOrbital.C', 
-		   'DrawMolItemQuickSurf.C', 
-		   'DrawMolItemSurface.C', 
-		   'DrawMolItemVolume.C', 
-		   'DrawForce.C', 
-		   'DrawRingsUtils.C', 
-		   'FastPBC.C',
-		   'FileRenderList.C', 
-		   'FileRenderer.C', 
-		   'FPS.C',
-		   'GaussianBlur.C', 
-		   'GelatoDisplayDevice.C',
-		   'GeometryAngle.C', 
-		   'GeometryAtom.C', 
-		   'GeometryBond.C', 
-		   'GeometryDihedral.C', 
-		   'GeometryList.C', 
-		   'GeometryMol.C', 
-		   'GeometrySpring.C', 
-		   'GraphLayout.C', 
-		   'Hershey.C', 
-		   'HMDMgr.C', 
-		   'Inform.C', 
-		   'ImageIO.C', 
-		   'Isosurface.C', 
-		   'JRegex.C', 
-		   'JString.C', 
-		   'macosxvmdstart.C', 
-                   'MaterialList.C',
-		   'Matrix4.C', 
-		   'MayaDisplayDevice.C', 
-		   'MDFF.C', 
-		   'Measure.C',
-		   'MeasureCluster.C',
-		   'MeasurePBC.C',
-		   'MeasureRDF.C',
-		   'MeasureQCP.C',
-		   'MeasureSurface.C',
-		   'MeasureSymmetry.C',
-		   'MeasureVolInterior.C',
-		   'MobileInterface.C', 
-		   'MobileButtons.C', 
-		   'MobileTracker.C', 
-		   'Molecule.C', 
-		   'MoleculeList.C', 
-		   'MoleculeGraphics.C', 
-		   'MolFilePlugin.C',
-		   'Mouse.C', 
-		   'MSMSInterface.C', 
-		   'NanoShaperInterface.C', 
-                   'Orbital.C',
-                   'OrbitalJIT.C',
-                   'PeriodicTable.C',
-		   'P_JoystickTool.C',
-		   'P_TugTool.C',
-		   'P_GrabTool.C',
-		   'P_PrintTool.C',
-		   'P_PinchTool.C',
-		   'P_UIVR.C',
-		   'P_Buttons.C',
-		   'P_Tracker.C',
-		   'P_Tool.C',
-		   'P_CmdTool.C',
-		   'P_SensorConfig.C',
-		   'ParseTree.C', 
-		   'PickList.C', 
-		   'PickModeAddBond.C',
-		   'PickModeCenter.C', 
-		   'PickModeForce.C',
-		   'PickModeList.C',
-		   'PickModeMolLabel.C', 
-		   'PickModeMove.C', 
-		   'PickModeUser.C', 
-		   'PlainTextInterp.C',
-		   'PluginMgr.C',
-		   'POV3DisplayDevice.C', 
-		   'PSDisplayDevice.C', 
-		   'QMData.C',
-		   'QMTimestep.C',
-                   'QuickSurf.C',
-                   'RadianceDisplayDevice.C', 
-		   'RayShadeDisplayDevice.C', 
-		   'R3dDisplayDevice.C', 
-		   'RenderManDisplayDevice.C',
-		   'Scene.C', 
-		   'ScaleSpaceFilter.C',
-                   'Segmentation.C',
-                   'SnapshotDisplayDevice.C', 
-		   'Spaceball.C',
-		   'SpaceballButtons.C',
-		   'SpaceballTracker.C',
-		   'SpatialSearch.C',
-		   'SpringTool.C',
-		   'Stage.C', 
-		   'STLDisplayDevice.C', 
-		   'Stride.C', 
-		   'Surf.C', 
-		   'SymbolTable.C', 
-		   'TachyonDisplayDevice.C', 
-		   'Timestep.C', 
-		   'UIObject.C', 
-		   'UIText.C', 
-                   'VideoStream.C',
-                   'VMDApp.C',
-                   'VMDCollab.C',
-		   'VMDDir.C', 
-		   'VMDDisplayList.C',
-		   'VMDMenu.C',
-	  	   'VMDQuat.C',
-		   'VMDTitle.C', 
-                   'VolCPotential.C',
-		   'VolMapCreate.C',
-		   'VolMapCreateILS.C',
-                   'VolumetricData.C',
-                   'VolumeTexture.C',
-                   'Voltool.C',
-		   'VrmlDisplayDevice.C', 
-		   'Vrml2DisplayDevice.C', 
-		   'Watershed.C', 
-		   'WavefrontDisplayDevice.C', 
-		   'WKFThreads.C',
-		   'WKFUtils.C',
-		   'utilities.C', 
-		   'util_simd.C', 
-		   'vmd.C',
-		   'vmdmain.C',
-		   'X3DDisplayDevice.C',
-		   @tcl_ccpp,
-		   @tk_ccpp
-		   );
+			 'androidvmdstart.C', 
+			 'Animation.C', 
+			 'ArtDisplayDevice.C', 
+			 'AtomColor.C', 
+									 'AtomParser.C', 
+									 'AtomLexer.C', 
+			 'AtomRep.C', 
+			 'AtomSel.C', 
+			 'Axes.C', 
+			 'BaseMolecule.C', 
+			 'Benchmark.C',
+									 'BondSearch.C', 
+			 'CmdAnimate.C', 
+			 'CmdColor.C', 
+			 'CmdDisplay.C', 
+			 'CmdLabel.C', 
+									 'CmdMaterial.C',
+			 'CmdMenu.C', 
+			 'CmdMol.C', 
+			 'CmdRender.C', 
+			 'CmdTrans.C', 
+			 'CommandQueue.C', 
+			 'CoorPluginData.C',
+			 'CUDAAccel.C', 
+			 'DisplayDevice.C', 
+			 'Displayable.C', 
+			 'DisplayRocker.C', 
+			 'DispCmds.C', 
+			 'DrawMolecule.C', 
+			 'DrawMolItem.C', 
+			 'DrawMolItem2.C', 
+			 'DrawMolItemRibbons.C', 
+			 'DrawMolItemMSMS.C', 
+			 'DrawMolItemNanoShaper.C', 
+			 'DrawMolItemRings.C', 
+			 'DrawMolItemOrbital.C', 
+			 'DrawMolItemQuickSurf.C', 
+			 'DrawMolItemSurface.C', 
+			 'DrawMolItemVolume.C', 
+			 'DrawForce.C', 
+			 'DrawRingsUtils.C', 
+			 'FastPBC.C',
+			 'FileRenderList.C', 
+			 'FileRenderer.C', 
+			 'FPS.C',
+			 'GaussianBlur.C', 
+			 'GelatoDisplayDevice.C',
+			 'GeometryAngle.C', 
+			 'GeometryAtom.C', 
+			 'GeometryBond.C', 
+			 'GeometryDihedral.C', 
+			 'GeometryList.C', 
+			 'GeometryMol.C', 
+			 'GeometrySpring.C', 
+			 'GraphLayout.C', 
+			 'Hershey.C', 
+			 'HMDMgr.C', 
+			 'Inform.C', 
+			 'ImageIO.C', 
+			 'Isosurface.C', 
+			 'JRegex.C', 
+			 'JString.C', 
+			 'macosxvmdstart.C', 
+									 'MaterialList.C',
+			 'Matrix4.C', 
+			 'MayaDisplayDevice.C', 
+			 'MDFF.C', 
+			 'Measure.C',
+			 'MeasureCluster.C',
+			 'MeasurePBC.C',
+			 'MeasureRDF.C',
+			 'MeasureQCP.C',
+			 'MeasureSurface.C',
+			 'MeasureSymmetry.C',
+			 'MeasureVolInterior.C',
+			 'MobileInterface.C', 
+			 'MobileButtons.C', 
+			 'MobileTracker.C', 
+			 'Molecule.C', 
+			 'MoleculeList.C', 
+			 'MoleculeGraphics.C', 
+			 'MolFilePlugin.C',
+			 'Mouse.C', 
+			 'MSMSInterface.C', 
+			 'NanoShaperInterface.C', 
+									 'Orbital.C',
+									 'OrbitalJIT.C',
+									 'PeriodicTable.C',
+			 'P_JoystickTool.C',
+			 'P_TugTool.C',
+			 'P_GrabTool.C',
+			 'P_PrintTool.C',
+			 'P_PinchTool.C',
+			 'P_UIVR.C',
+			 'P_Buttons.C',
+			 'P_Tracker.C',
+			 'P_Tool.C',
+			 'P_CmdTool.C',
+			 'P_SensorConfig.C',
+			 'ParseTree.C', 
+			 'PickList.C', 
+			 'PickModeAddBond.C',
+			 'PickModeCenter.C', 
+			 'PickModeForce.C',
+			 'PickModeList.C',
+			 'PickModeMolLabel.C', 
+			 'PickModeMove.C', 
+			 'PickModeUser.C', 
+			 'PlainTextInterp.C',
+			 'PluginMgr.C',
+			 'POV3DisplayDevice.C', 
+			 'PSDisplayDevice.C', 
+			 'QMData.C',
+			 'QMTimestep.C',
+									 'QuickSurf.C',
+									 'RadianceDisplayDevice.C', 
+			 'RayShadeDisplayDevice.C', 
+			 'R3dDisplayDevice.C', 
+			 'RenderManDisplayDevice.C',
+			 'Scene.C', 
+			 'ScaleSpaceFilter.C',
+									 'Segmentation.C',
+									 'SnapshotDisplayDevice.C', 
+			 'Spaceball.C',
+			 'SpaceballButtons.C',
+			 'SpaceballTracker.C',
+			 'SpatialSearch.C',
+			 'SpringTool.C',
+			 'Stage.C', 
+			 'STLDisplayDevice.C', 
+			 'Stride.C', 
+			 'Surf.C', 
+			 'SymbolTable.C', 
+			 'TachyonDisplayDevice.C', 
+			 'Timestep.C', 
+			 'UIObject.C', 
+			 'UIText.C', 
+									 'VideoStream.C',
+									 'VMDApp.C',
+									 'VMDCollab.C',
+			 'VMDDir.C', 
+			 'VMDDisplayList.C',
+			 'VMDMenu.C',
+				 'VMDQuat.C',
+			 'VMDTitle.C', 
+									 'VolCPotential.C',
+			 'VolMapCreate.C',
+			 'VolMapCreateILS.C',
+									 'VolumetricData.C',
+									 'VolumeTexture.C',
+									 'Voltool.C',
+			 'VrmlDisplayDevice.C', 
+			 'Vrml2DisplayDevice.C', 
+			 'Watershed.C', 
+			 'WavefrontDisplayDevice.C', 
+			 'WKFThreads.C',
+			 'WKFUtils.C',
+			 'utilities.C', 
+			 'util_simd.C', 
+			 'vmd.C',
+			 'vmdmain.C',
+			 'X3DDisplayDevice.C',
+			 @tcl_ccpp,
+			 @tk_ccpp
+			 );
 
 ################### standard headers
 
 # VMD header files 
 @vmd_h	   = (
-	      'Animation.h', 
-	      'ArtDisplayDevice.h', 
-	      'Atom.h', 
-	      'AtomColor.h', 
-	      'AtomParser.h', 
-	      'AtomRep.h', 
-	      'AtomSel.h', 
-	      'Axes.h', 
-	      'BaseMolecule.h', 
-              'Benchmark.h',
-	      'BondSearch.h', 
-	      'CmdAnimate.h', 
-	      'CmdColor.h', 
-	      'CmdDisplay.h', 
-	      'CmdLabel.h', 
-              'CmdMaterial.h',
-	      'CmdMenu.h', 
-	      'CmdMol.h', 
-	      'CmdRender.h', 
-	      'CmdTrans.h', 
-	      'Command.h', 
-	      'CommandQueue.h', 
-	      'CoorData.h',
-              'CUDAAccel.h', 
-	      'CoorPluginData.h',
-              'DepthSortObj.h',
-	      'DispCmds.h', 
-	      'DisplayDevice.h', 
-	      'Displayable.h', 
-	      'DisplayRocker.h', 
-	      'DrawMolecule.h', 
-	      'DrawMolItem.h', 
-	      'DrawMolItemSolventPoints.data', 
-	      'DrawForce.h', 
-	      'GelatoDisplayDevice.h',
-	      'FPS.h',
-	      'FileRenderList.h', 
-	      'FileRenderer.h', 
-	      'Fragment.h', 
-	      'GeometryAngle.h', 
-	      'GeometryAtom.h', 
-	      'GeometryBond.h', 
-	      'GeometryDihedral.h', 
-	      'GeometryList.h', 
-	      'GeometryMol.h', 
-	      'GeometrySpring.h', 
-	      'Hershey.h', 
-	      'Inform.h', 
-              'ImageIO.h', 
-	      'Isosurface.h', 
-	      'JRegex.h', 
-	      'JString.h', 
-	      'macosxvmdstart.h', 
-              'MaterialList.h',
-	      'Matrix4.h', 
-	      'MayaDisplayDevice.h', 
-	      'Measure.h',
-	      'MeasureSymmetry.h',
-	      'Molecule.h', 
-	      'MoleculeGraphics.h', 
-	      'MoleculeList.h', 
-	      'MolFilePlugin.h',
-	      'Mouse.h', 
-	      'MSMSInterface.h', 
-	      'NameList.h',
-	      'NanoShaperInterface.h', 
-              'PeriodicTable.h',
-	      'Orbital.h',
-              'P_JoystickTool.h',
-	      'P_TugTool.h',
-	      'P_PinchToo.h',
-	      'P_GrabTool.h',
-	      'P_PrintTool.h',
-	      'P_Feedback.h',
-	      'P_UIVR.h',
-	      'P_Buttons.h',
-	      'P_Tracker.h',
-	      'P_CmdTool.h',
-	      'P_SensorConfig.h',
-	      'P_Tool.h',
-	      'ParseTree.h', 
-	      'PickList.h', 
-	      'PickMode.h', 
-	      'PickModeAddBond.h',
-	      'PickModeCenter.h', 
-	      'PickModeForce.h',
-	      'PickModeList.h',
-	      'PickModeMolLabel.h', 
-	      'PickModeMove.h', 
-	      'Pickable.h', 
-	      'PlainTextInterp.h',
-	      'PluginMgr.h',
-	      'PointerTool.h', 
-	      'POV3DisplayDevice.h', 
-	      'PSDisplayDevice.h', 
-	      'QMData.h',
-              'QMTimestep.h',
-              'RadianceDisplayDevice.h', 
-	      'RayShadeDisplayDevice.h', 
-	      'R3dDisplayDevice.h', 
-	      'ResizeArray.h',
-	      'RenderManDisplayDevice.h',
-	      'Residue.h', 
-	      'Scene.h', 
-	      'SnapshotDisplayDevice.h', 
-	      'SortableArray.h',
-	      'Spaceball.h', 
-	      'SpaceballButtons.h',
-	      'SpaceballTracker.h',
-	      'SpatialSearch.h', 
-	      'SpringTool.h',
-	      'Stack.h',
-	      'Stage.h', 
-	      'STLDisplayDevice.h', 
-	      'Stride.h', 
-	      'Surf.h', 
-	      'SymbolTable.h', 
-	      'TachyonDisplayDevice.h', 
-	      'TextEvent.h',
-	      'TextInterp.h',
-	      'Timestep.h', 
-	      'UIObject.h', 
-	      'UIText.h', 
-              'VideoStream.h',
-              'VMDApp.h',
-	      'VMDDir.h', 
-	      'VMDDisplayList.h',
-	      'VMDMenu.h',
-	      'VMDQuat.h',
-	      'VMDTitle.h', 
-              'VolCPotential.h',
-	      'VolMapCreate.h',
-              'VolumetricData.h',
-              'VolumeTexture.h',
-              'Voltool.h',
-	      'VrmlDisplayDevice.h', 
-	      'Vrml2DisplayDevice.h', 
-	      'Watershed.h', 
-	      'WavefrontDisplayDevice.h', 
-	      'X3DDisplayDevice.h',
-	      'utilities.h',
-	      'pcre.h',
-	      'pcreinternal.h',
-	      'pcretables.h',
-              'vmdsock.h',
-              'fitrms.h',
-	      @tcl_h,
-	      @tk_h
-	      );
+				'Animation.h', 
+				'ArtDisplayDevice.h', 
+				'Atom.h', 
+				'AtomColor.h', 
+				'AtomParser.h', 
+				'AtomRep.h', 
+				'AtomSel.h', 
+				'Axes.h', 
+				'BaseMolecule.h', 
+							'Benchmark.h',
+				'BondSearch.h', 
+				'CmdAnimate.h', 
+				'CmdColor.h', 
+				'CmdDisplay.h', 
+				'CmdLabel.h', 
+							'CmdMaterial.h',
+				'CmdMenu.h', 
+				'CmdMol.h', 
+				'CmdRender.h', 
+				'CmdTrans.h', 
+				'Command.h', 
+				'CommandQueue.h', 
+				'CoorData.h',
+							'CUDAAccel.h', 
+				'CoorPluginData.h',
+							'DepthSortObj.h',
+				'DispCmds.h', 
+				'DisplayDevice.h', 
+				'Displayable.h', 
+				'DisplayRocker.h', 
+				'DrawMolecule.h', 
+				'DrawMolItem.h', 
+				'DrawMolItemSolventPoints.data', 
+				'DrawForce.h', 
+				'GelatoDisplayDevice.h',
+				'FPS.h',
+				'FileRenderList.h', 
+				'FileRenderer.h', 
+				'Fragment.h', 
+				'GeometryAngle.h', 
+				'GeometryAtom.h', 
+				'GeometryBond.h', 
+				'GeometryDihedral.h', 
+				'GeometryList.h', 
+				'GeometryMol.h', 
+				'GeometrySpring.h', 
+				'Hershey.h', 
+				'Inform.h', 
+							'ImageIO.h', 
+				'Isosurface.h', 
+				'JRegex.h', 
+				'JString.h', 
+				'macosxvmdstart.h', 
+							'MaterialList.h',
+				'Matrix4.h', 
+				'MayaDisplayDevice.h', 
+				'Measure.h',
+				'MeasureSymmetry.h',
+				'Molecule.h', 
+				'MoleculeGraphics.h', 
+				'MoleculeList.h', 
+				'MolFilePlugin.h',
+				'Mouse.h', 
+				'MSMSInterface.h', 
+				'NameList.h',
+				'NanoShaperInterface.h', 
+							'PeriodicTable.h',
+				'Orbital.h',
+							'P_JoystickTool.h',
+				'P_TugTool.h',
+				'P_PinchToo.h',
+				'P_GrabTool.h',
+				'P_PrintTool.h',
+				'P_Feedback.h',
+				'P_UIVR.h',
+				'P_Buttons.h',
+				'P_Tracker.h',
+				'P_CmdTool.h',
+				'P_SensorConfig.h',
+				'P_Tool.h',
+				'ParseTree.h', 
+				'PickList.h', 
+				'PickMode.h', 
+				'PickModeAddBond.h',
+				'PickModeCenter.h', 
+				'PickModeForce.h',
+				'PickModeList.h',
+				'PickModeMolLabel.h', 
+				'PickModeMove.h', 
+				'Pickable.h', 
+				'PlainTextInterp.h',
+				'PluginMgr.h',
+				'PointerTool.h', 
+				'POV3DisplayDevice.h', 
+				'PSDisplayDevice.h', 
+				'QMData.h',
+							'QMTimestep.h',
+							'RadianceDisplayDevice.h', 
+				'RayShadeDisplayDevice.h', 
+				'R3dDisplayDevice.h', 
+				'ResizeArray.h',
+				'RenderManDisplayDevice.h',
+				'Residue.h', 
+				'Scene.h', 
+				'SnapshotDisplayDevice.h', 
+				'SortableArray.h',
+				'Spaceball.h', 
+				'SpaceballButtons.h',
+				'SpaceballTracker.h',
+				'SpatialSearch.h', 
+				'SpringTool.h',
+				'Stack.h',
+				'Stage.h', 
+				'STLDisplayDevice.h', 
+				'Stride.h', 
+				'Surf.h', 
+				'SymbolTable.h', 
+				'TachyonDisplayDevice.h', 
+				'TextEvent.h',
+				'TextInterp.h',
+				'Timestep.h', 
+				'UIObject.h', 
+				'UIText.h', 
+							'VideoStream.h',
+							'VMDApp.h',
+				'VMDDir.h', 
+				'VMDDisplayList.h',
+				'VMDMenu.h',
+				'VMDQuat.h',
+				'VMDTitle.h', 
+							'VolCPotential.h',
+				'VolMapCreate.h',
+							'VolumetricData.h',
+							'VolumeTexture.h',
+							'Voltool.h',
+				'VrmlDisplayDevice.h', 
+				'Vrml2DisplayDevice.h', 
+				'Watershed.h', 
+				'WavefrontDisplayDevice.h', 
+				'X3DDisplayDevice.h',
+				'utilities.h',
+				'pcre.h',
+				'pcreinternal.h',
+				'pcretables.h',
+							'vmdsock.h',
+							'fitrms.h',
+				@tcl_h,
+				@tk_h
+				);
 
 # VMD yacc and lex files.  There is only one of each,
 #  and they are used for the atom selection parser
@@ -2097,18 +2103,18 @@ $vmd_libs          = "$tcl_libs";
 # directory.
 @vmd_data    = ('.vmdsensors',
 		'.vmdrc');
-	       
+				 
 $vmd_bin_csh    = "vmd.csh";
 $vmd_bin_sh     = "vmd.sh";
 
 @vmd_extra   = (@tcl_extra);
 
 @vmd_other_exe  = (
-		   "$vmd_library_dir/stride/stride_$config_arch",
-		   "$vmd_library_dir/surf/surf_$config_arch",
-		   "$vmd_library_dir/tachyon/tachyon_$config_arch"
-		   );
-		   
+			 "$vmd_library_dir/stride/stride_$config_arch",
+			 "$vmd_library_dir/surf/surf_$config_arch",
+			 "$vmd_library_dir/tachyon/tachyon_$config_arch"
+			 );
+			 
 @vmd_other_names = ("stride_$config_arch");
 
 @vmd_main_dir_files = ('Announcement', 'FEEDBACK', 'LICENSE', 
@@ -2117,84 +2123,84 @@ $vmd_bin_sh     = "vmd.sh";
 
 ################## ARCHITECTURE-SPECIFIC VERSIONS   ###############
 if ($config_arch eq "AIX6_64") {
-  if ($config_lp64) {
-    # -64 64-bit mode
-    print "Configured for -64 64-bit build.\n";
-    $arch_cc          = "xlc";
-    $arch_ccpp        = "xlC";
-    $arch_copts       = "-O -q64 -qarch=com -qtune=pwr5";
-    $arch_opt_flag    = "-O -q64 -qarch=com -qtune=pwr5";
-    $arch_cppopts     = "-D_H_ACCESS=1";
-  }
+	if ($config_lp64) {
+		# -64 64-bit mode
+		print "Configured for -64 64-bit build.\n";
+		$arch_cc          = "xlc";
+		$arch_ccpp        = "xlC";
+		$arch_copts       = "-O -q64 -qarch=com -qtune=pwr5";
+		$arch_opt_flag    = "-O -q64 -qarch=com -qtune=pwr5";
+		$arch_cppopts     = "-D_H_ACCESS=1";
+	}
 
-  $opengl_dep_libs  = "-lGL -lX11 -lXext";
-  $mesa_libs        = "-lMesaGL -lXext";
+	$opengl_dep_libs  = "-lGL -lX11 -lXext";
+	$mesa_libs        = "-lMesaGL -lXext";
 
-  $arch_lex         = "flex";  # has problems with the vendor lex... 
+	$arch_lex         = "flex";  # has problems with the vendor lex... 
 
-  # needed for plugins
-  $arch_lopts       = "-ldl";
+	# needed for plugins
+	$arch_lopts       = "-ldl";
 
-  # On systems that have libperfstat installed, use perfstat APIs for
-  # memory queries
-  $arch_cppopts .= " -DAIXUSEPERFSTAT";
-  $arch_lopts   .= " -lperfstat";
+	# On systems that have libperfstat installed, use perfstat APIs for
+	# memory queries
+	$arch_cppopts .= " -DAIXUSEPERFSTAT";
+	$arch_lopts   .= " -lperfstat";
 }
 
 
 if ($config_arch eq "ANDROIDARMV7A") {
-  $pthreads_libs = "";
-  ##
-  ## Android NDK notes:
-  ##    NDK version r8b works well on RHEL 4.x hosts, but r8d has glibc issues
-  ##    NDK version r9 seems to work fine on RHEL 5.5 hosts, but has not yet
-  ##    been fully tested with VMD.
-  ##   
-  $androidbins = "/Projects/collaboratory/kvandivo/android-ndk-r8b/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86/bin/";
-  $androidincs = "-DANDROID -I/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/stlport/stlport -I/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/system/include -I/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm/usr/include";
-  $androidlibs = "-L/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm/usr/lib -L/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/stlport/libs/armeabi-v7a/";
-  $androidsysroot = "--sysroot=/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm";
-  $androidabi = "arm-linux-androideabi-";
-  $arch_cc       = $androidbins . $androidabi . "gcc";
-  $arch_ccpp     = $androidbins . $androidabi . "g++";
-  $arch_copts       = "-Wall -Wno-unknown-pragmas -Wno-psabi -MMD -MP -fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -march=armv7-a -msoft-float -mfpu=vfp -fno-exceptions -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 -Wa,--noexecstac";
-  $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -Wno-psabi -MMD -MP -fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -march=armv7-a -msoft-float -mfpu=vfp -fno-exceptions -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 -Wa,--noexecstac";
-  $arch_copts    = $androidincs;
-  $arch_cppopts  = $androidincs;
-  $arch_lex      = "flex";
+	$pthreads_libs = "";
+	##
+	## Android NDK notes:
+	##    NDK version r8b works well on RHEL 4.x hosts, but r8d has glibc issues
+	##    NDK version r9 seems to work fine on RHEL 5.5 hosts, but has not yet
+	##    been fully tested with VMD.
+	##   
+	$androidbins = "/Projects/collaboratory/kvandivo/android-ndk-r8b/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86/bin/";
+	$androidincs = "-DANDROID -I/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/stlport/stlport -I/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/system/include -I/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm/usr/include";
+	$androidlibs = "-L/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm/usr/lib -L/home/kvandivo/Proj/android-ndk-r8b/sources/cxx-stl/stlport/libs/armeabi-v7a/";
+	$androidsysroot = "--sysroot=/home/kvandivo/Proj/android-ndk-r8b/platforms/android-14/arch-arm";
+	$androidabi = "arm-linux-androideabi-";
+	$arch_cc       = $androidbins . $androidabi . "gcc";
+	$arch_ccpp     = $androidbins . $androidabi . "g++";
+	$arch_copts       = "-Wall -Wno-unknown-pragmas -Wno-psabi -MMD -MP -fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -march=armv7-a -msoft-float -mfpu=vfp -fno-exceptions -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 -Wa,--noexecstac";
+	$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -Wno-psabi -MMD -MP -fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -march=armv7-a -msoft-float -mfpu=vfp -fno-exceptions -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 -Wa,--noexecstac";
+	$arch_copts    = $androidincs;
+	$arch_cppopts  = $androidincs;
+	$arch_lex      = "flex";
 
-  # needed for plugins
-  $arch_lopts       = "-Wl,-soname,libjniWrapper.so -shared " . $androidsysroot . " -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now " . $androidlibs . " -lstlport_static -lc -lm";
+	# needed for plugins
+	$arch_lopts       = "-Wl,-soname,libjniWrapper.so -shared " . $androidsysroot . " -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now " . $androidlibs . " -lstlport_static -lc -lm";
 }
 
 
 # IBM Blue Gene/Q
 if ($config_arch eq "BLUEGENEQ") {
-  # -64 64-bit mode
-  print "Configured for -64 64-bit build.\n";
-  $arch_cc          = "mpixlc ";
-  $arch_ccpp        = "mpixlcxx_r ";
-  $arch_copts       = "-O -q64 -qarch=qp -qtune=qp $ENV{CPPFLAGS}";
-  $arch_opt_flag    = "-O -q64 -qarch=qp -qtune=qp $ENV{CPPFLAGS}";
+	# -64 64-bit mode
+	print "Configured for -64 64-bit build.\n";
+	$arch_cc          = "mpixlc ";
+	$arch_ccpp        = "mpixlcxx_r ";
+	$arch_copts       = "-O -q64 -qarch=qp -qtune=qp $ENV{CPPFLAGS}";
+	$arch_opt_flag    = "-O -q64 -qarch=qp -qtune=qp $ENV{CPPFLAGS}";
 #    $arch_cppopts     = "-D_H_ACCESS=1" . $arch_no_math_float;
-  $arch_cppopts     = "-D_H_ACCESS=1 ";
+	$arch_cppopts     = "-D_H_ACCESS=1 ";
 
-  $opengl_dep_libs  = "-lGL -lX11 -lXext";
-  $mesa_libs        = "-lMesaGL -lXext";
+	$opengl_dep_libs  = "-lGL -lX11 -lXext";
+	$mesa_libs        = "-lMesaGL -lXext";
 
-  $arch_lex         = "flex";  # has problems with the vendor lex...
+	$arch_lex         = "flex";  # has problems with the vendor lex...
 
-  # needed for plugins
-  $arch_lopts       = "-ldl $ENV{LDFLAGS}";
+	# needed for plugins
+	$arch_lopts       = "-ldl $ENV{LDFLAGS}";
 
-  if ($config_mpi) {
-    $arch_copts       .= " -DUSE_MPI_IN_PLACE";
-    $arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
-    $mpi_libs        = "";
-  }
+	if ($config_mpi) {
+		$arch_copts       .= " -DUSE_MPI_IN_PLACE";
+		$arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
+		$mpi_libs        = "";
+	}
 
-  # On systems that have libperfstat installed, use perfstat APIs for
-  # memory queries
+	# On systems that have libperfstat installed, use perfstat APIs for
+	# memory queries
 #  $arch_cppopts .= " -DAIXUSEPERFSTAT";
 #  $arch_lopts   .= " -lperfstat";
 }
@@ -2202,50 +2208,50 @@ if ($config_arch eq "BLUEGENEQ") {
 
 
 if ($config_arch eq "BLUEWATERS" || 
-    $config_arch eq "CRAY_XC" || $config_arch eq "CRAY_XK") {
-  # -64 64-bit mode
-  print "Configured for -64 64-bit build.\n";
+		$config_arch eq "CRAY_XC" || $config_arch eq "CRAY_XK") {
+	# -64 64-bit mode
+	print "Configured for -64 64-bit build.\n";
 
-  if ($config_icc) {
-    # for compiling with Intel C/C++:
-    $arch_cc          = "cc";
-    $arch_ccpp        = "CC";
-    $arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
-    $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
+	if ($config_icc) {
+		# for compiling with Intel C/C++:
+		$arch_cc          = "cc";
+		$arch_ccpp        = "CC";
+		$arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
+		$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
 
-    if ($config_static) {
-      # link everything statically (this won't work due to libGL issues)
-      $arch_lopts     = "-static";
-    } else {
-      # link the Intel compiler libraries statically, and use the GCC C++ libs
-      # $arch_lopts   = "-static-libcxa -cxxlib-gcc";
-      # dynamically link all libs, and use Intel libs where possible
-      $arch_lopts     = "-rdynamic ";
-    }
-    $arch_lopts       .= "-static-intel ";
-  } else {
-    # Assume GCC 
-    $arch_cc          = "cc";
-    $arch_ccpp        = "CC";
-    $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O6 -ffast-math";
-    $arch_opt_flag    = "-m64 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O6 -ffast-math";
-  }
+		if ($config_static) {
+			# link everything statically (this won't work due to libGL issues)
+			$arch_lopts     = "-static";
+		} else {
+			# link the Intel compiler libraries statically, and use the GCC C++ libs
+			# $arch_lopts   = "-static-libcxa -cxxlib-gcc";
+			# dynamically link all libs, and use Intel libs where possible
+			$arch_lopts     = "-rdynamic ";
+		}
+		$arch_lopts       .= "-static-intel ";
+	} else {
+		# Assume GCC 
+		$arch_cc          = "cc";
+		$arch_ccpp        = "CC";
+		$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O6 -ffast-math";
+		$arch_opt_flag    = "-m64 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O6 -ffast-math";
+	}
 
-  if ($config_mpi) {
-    $arch_copts       .= " -DUSE_MPI_IN_PLACE";
-    $arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
-    $mpi_libs        = "";
-  }
+	if ($config_mpi) {
+		$arch_copts       .= " -DUSE_MPI_IN_PLACE";
+		$arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
+		$mpi_libs        = "";
+	}
 
-  $opengl_dep_libs  = "-lGL -lX11 -lXext";
-  $mesa_libs        = "-lMesaGL -lXext";
+	$opengl_dep_libs  = "-lGL -lX11 -lXext";
+	$mesa_libs        = "-lMesaGL -lXext";
 
-  $arch_lex         = "flex";  # has problems with the vendor lex... 
+	$arch_lex         = "flex";  # has problems with the vendor lex... 
 
-  # also needed for plugins
-  $system_libs .= " -ldl";
+	# also needed for plugins
+	$system_libs .= " -ldl";
 
-  if ($config_cuda) {
+	if ($config_cuda) {
 #    $arch_nvcc        = "/opt/nvidia/cudatoolkit/default/bin/nvcc";
 #    $cuda_library     = "-L/opt/nvidia/cudatoolkit/default/lib64";
 #
@@ -2263,13 +2269,13 @@ if ($config_arch eq "BLUEWATERS" ||
 #    $arch_nvcc        = "/opt/nvidia/cudatoolkit7.0/7.0.28-1.0502.10280.4.1/bin/nvcc";
 #    $cuda_library     = "-L/opt/nvidia/cudatoolkit7.0/7.0.28-1.0502.10280.4.1/lib64";
  
-    $arch_nvcc        = "/opt/nvidia/cudatoolkit7.5/7.5.18-1.0502.10743.2.1/bin/nvcc";
-    $cuda_library     = "-L/opt/nvidia/cudatoolkit7.5/7.5.18-1.0502.10743.2.1/lib64";
+		$arch_nvcc        = "/opt/nvidia/cudatoolkit7.5/7.5.18-1.0502.10743.2.1/bin/nvcc";
+		$cuda_library     = "-L/opt/nvidia/cudatoolkit7.5/7.5.18-1.0502.10743.2.1/lib64";
 
-    # Only generate code for SM 3.5 or higher on Cray machines
-    $arch_nvccflags   = "--ptxas-options=-v " .
-                    "-gencode arch=compute_35,code=sm_35 " .
-                    "--ftz=true ";
+		# Only generate code for SM 3.5 or higher on Cray machines
+		$arch_nvccflags   = "--ptxas-options=-v " .
+										"-gencode arch=compute_35,code=sm_35 " .
+										"--ftz=true ";
 
 # Note: CSCS 'dom' is now using CUDA 8.0
 #    $arch_nvcc        = "/opt/nvidia/cudatoolkit8.0/8.0.34_2.2.5_g8ce7a9a-2.1/bin/nvcc";
@@ -2285,1101 +2291,1106 @@ if ($config_arch eq "BLUEWATERS" ||
 #    # Cray XC50 w/ CUDA 8.0 need "-lrt" now too... 
 #    $cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
 
-    $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-  }
+		$arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+	}
 
-  # The OptiX toolkit version has to be compatible with the CUDA libs
-  # installed on the machine...  We currently use OptiX 3.5.1 built against
-  # CUDA 5.5.
-  if ($config_liboptix) {
-    $liboptix_include     = "-I$liboptix_dir/include -I$cuda_dir/include";
-    $liboptix_library     = "-L$liboptix_dir/lib64";
-  }
+	# The OptiX toolkit version has to be compatible with the CUDA libs
+	# installed on the machine...  We currently use OptiX 3.5.1 built against
+	# CUDA 5.5.
+	if ($config_liboptix) {
+		$liboptix_include     = "-I$liboptix_dir/include -I$cuda_dir/include";
+		$liboptix_library     = "-L$liboptix_dir/lib64";
+	}
 
-  # needed for OpenCL
-  $opencl_include     = "-I/usr/include/CL/inc";
-  $opencl_library     = "";
-  $opencl_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lOpenCL";
+	# needed for OpenCL
+	$opencl_include     = "-I/usr/include/CL/inc";
+	$opencl_library     = "";
+	$opencl_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lOpenCL";
 
-  if ($config_python) {
-    # this is to make python happy
-    $system_libs .= " -lutil";
-  }
-  if ($config_shared) {
-    $arch_opt_flag   .= " -fPIC";
-    $arch_copts      .= " -fPIC";
-    $arch_nvccflags  .= " -Xcompiler -fPIC";
-    $arch_lopts       = "-shared";
-    $arch_cppopts    .= " -DVMD_SHARED";
-  }
+	if ($config_python) {
+		# this is to make python happy
+		$system_libs .= " -lutil";
+	}
+	if ($config_shared) {
+		$arch_opt_flag   .= " -fPIC";
+		$arch_copts      .= " -fPIC";
+		$arch_nvccflags  .= " -Xcompiler -fPIC";
+		$arch_lopts       = "-shared";
+		$arch_cppopts    .= " -DVMD_SHARED";
+	}
 }
 
 
 if ($config_arch eq "FREEBSD") {
-    $def_imageviewer="display %s";
+		$def_imageviewer="display %s";
 
-    # XFree 4.0 Direct Rendering Interface and GLX 
-    $opengl_dep_dir     = "/usr/local";
+		# XFree 4.0 Direct Rendering Interface and GLX 
+		$opengl_dep_dir     = "/usr/local";
 # -DGLX_GLXEXT_LEGACY is required for patched OpenGLExtensions.C to compile.
 # See patched OpenGLExtensions.C for explanation.
-    $opengl_dep_include = "-DGLX_GLXEXT_LEGACY -I$opengl_dep_dir/include";
-    $opengl_dep_library = "-L$opengl_dep_dir/lib -L/usr/local/lib";
-    $opengl_dep_libs    = "-lGL"; 
+		$opengl_dep_include = "-DGLX_GLXEXT_LEGACY -I$opengl_dep_dir/include";
+		$opengl_dep_library = "-L$opengl_dep_dir/lib -L/usr/local/lib";
+		$opengl_dep_libs    = "-lGL"; 
 
-    $arch_lex      = "flex";
-    $arch_yacc     = "bison -b y -d ";  # If standard yacc doesn't work
+		$arch_lex      = "flex";
+		$arch_yacc     = "bison -b y -d ";  # If standard yacc doesn't work
 
-    $arch_cc          = "gcc";
-    $arch_ccpp        = "g++";
-    $arch_depend_flag = "-MM";
-    $arch_shld        = "g++ -shared";
-    $arch_shlibname   = "so";
-    $arch_shcppopts   = "-fPIC";
-    $arch_shldopts    = "-L/usr/local/lib";
+		$arch_cc          = "gcc";
+		$arch_ccpp        = "g++";
+		$arch_depend_flag = "-MM";
+		$arch_shld        = "g++ -shared";
+		$arch_shlibname   = "so";
+		$arch_shcppopts   = "-fPIC";
+		$arch_shldopts    = "-L/usr/local/lib";
 
-    $arch_opt_flag    = "-m32 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O3";
-    $arch_copts       = "-m32 -Wall -Wno-unknown-pragmas -O3";
+		$arch_opt_flag    = "-m32 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O3";
+		$arch_copts       = "-m32 -Wall -Wno-unknown-pragmas -O3";
 
-    if ($config_static) {
-      $arch_lopts       = "-static";
-      $mesa_libs        = "-lMesaGL -L/usr/local/lib -lXext -lX11";
-    } else {
-      $arch_lopts       = "";
-      $mesa_libs        = "-lGL -L/usr/local/lib -lXext -lX11";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static";
+			$mesa_libs        = "-lMesaGL -L/usr/local/lib -lXext -lX11";
+		} else {
+			$arch_lopts       = "";
+			$mesa_libs        = "-lGL -L/usr/local/lib -lXext -lX11";
+		}
 
-    if ($config_shared) {
-      $arch_lopts       = "-shared";
-      $arch_cppopts .= " -DVMD_SHARED";
-    }
+		if ($config_shared) {
+			$arch_lopts       = "-shared";
+			$arch_cppopts .= " -DVMD_SHARED";
+		}
 
-    # this is to make tcl happy,
-    # also needed for plugins
-    # $system_libs .= " -ldl";
+		# this is to make tcl happy,
+		# also needed for plugins
+		# $system_libs .= " -ldl";
  
-    if ($config_python) {
-      # this is to make python happy
-      $system_libs .= " -lutil";
-    }
+		if ($config_python) {
+			# this is to make python happy
+			$system_libs .= " -lutil";
+		}
 
-    # this is necessary for the embedded Python interpreter to dynamically
-    # load shared libraries.  It increases the size of the binary by 200k.
-    $arch_lopts .= " -Xlinker -export-dynamic";
+		# this is necessary for the embedded Python interpreter to dynamically
+		# load shared libraries.  It increases the size of the binary by 200k.
+		$arch_lopts .= " -Xlinker -export-dynamic";
 }
 
 
 if ($config_arch eq "FREEBSDAMD64") {
-    $def_imageviewer="display %s";
-    if ($config_lp64) {
-      print "LP64 ABI is already the default on this platform.\n";
-    }
+		$def_imageviewer="display %s";
+		if ($config_lp64) {
+			print "LP64 ABI is already the default on this platform.\n";
+		}
 
-    # XFree 4.0 Direct Rendering Interface and GLX 
-    $opengl_dep_dir     = "/usr/local";
+		# XFree 4.0 Direct Rendering Interface and GLX 
+		$opengl_dep_dir     = "/usr/local";
 # -DGLX_GLXEXT_LEGACY is required for patched OpenGLExtensions.C to compile.
 # See patched OpenGLExtensions.C for explanation.
-    $opengl_dep_include = "-DGLX_GLXEXT_LEGACY -I$opengl_dep_dir/include";
-    $opengl_dep_library = "-L$opengl_dep_dir/lib -L/usr/local/lib";
-    $opengl_dep_libs    = "-lGL"; 
+		$opengl_dep_include = "-DGLX_GLXEXT_LEGACY -I$opengl_dep_dir/include";
+		$opengl_dep_library = "-L$opengl_dep_dir/lib -L/usr/local/lib";
+		$opengl_dep_libs    = "-lGL"; 
 
-    $arch_lex      = "flex";
-    $arch_yacc     = "bison -b y -d ";  # If standard yacc doesn't work
+		$arch_lex      = "flex";
+		$arch_yacc     = "bison -b y -d ";  # If standard yacc doesn't work
 
-    $arch_cc          = "gcc";
-    $arch_ccpp        = "g++";
-    $arch_depend_flag = "-MM";
-    $arch_shld        = "ld -shared";
-    $arch_shlibname   = "so";
-    $arch_shcppopts   = "-fPIC";
-    $arch_shldopts    = "-L/usr/local/lib -L/usr/local/lib";
+		$arch_cc          = "gcc";
+		$arch_ccpp        = "g++";
+		$arch_depend_flag = "-MM";
+		$arch_shld        = "ld -shared";
+		$arch_shlibname   = "so";
+		$arch_shcppopts   = "-fPIC";
+		$arch_shldopts    = "-L/usr/local/lib -L/usr/local/lib";
 
-    $arch_opt_flag	= "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
-    $arch_copts	        = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
+		$arch_opt_flag	= "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
+		$arch_copts	        = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
 
-    if ($config_static) {
-      $arch_lopts       = "-static";
-      $mesa_libs        = "-lMesaGL -L/usr/local/lib -lXext -lX11";
-    } else {
-      $arch_lopts       = "";
-      $mesa_libs        = "-lGL -L/usr/local/lib -lXext -lX11";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static";
+			$mesa_libs        = "-lMesaGL -L/usr/local/lib -lXext -lX11";
+		} else {
+			$arch_lopts       = "";
+			$mesa_libs        = "-lGL -L/usr/local/lib -lXext -lX11";
+		}
 
-    if ($config_shared) {
-      $arch_lopts       = "-shared";
-    }
+		if ($config_shared) {
+			$arch_lopts       = "-shared";
+		}
 
-    # this is to make tcl happy,
-    # also needed for plugins
-    # $system_libs .= " -ldl";
+		# this is to make tcl happy,
+		# also needed for plugins
+		# $system_libs .= " -ldl";
 
-    if ($config_python) {
-      # this is to make python happy
-      $system_libs .= " -lutil";
-    }
+		if ($config_python) {
+			# this is to make python happy
+			$system_libs .= " -lutil";
+		}
 
-    # this is necessary for the embedded Python interpreter to dynamically
-    # load shared libraries.  It increases the size of the binary by 200k.
-    $arch_lopts .= " -Xlinker -export-dynamic";
+		# this is necessary for the embedded Python interpreter to dynamically
+		# load shared libraries.  It increases the size of the binary by 200k.
+		$arch_lopts .= " -Xlinker -export-dynamic";
 }
 
 
 if ($config_arch eq "LINUX") {
-    $def_imageviewer="display %s";
-    if ($config_lp64) {
-      print "No LP64 ABI on this platform currently.\n";
-    }
+		$def_imageviewer="display %s";
+		if ($config_lp64) {
+			print "No LP64 ABI on this platform currently.\n";
+		}
 
-    $fltk_libs        = "-lfltk -lX11 -lXft";
+		$fltk_libs        = "-lfltk -lX11 -lXft";
 
-    # XFree 4.0 Direct Rendering Interface and GLX 
-    $opengl_dep_dir         = "/usr/X11R6";
-    $opengl_dep_include     = "-I$opengl_dep_dir/include";
-    $opengl_dep_library     = "-L$opengl_dep_dir/lib";
-    $opengl_dep_libs        = "-lGL"; 
-    # $opengl_dep_libs      = "-L/usr/X11R6/lib -lGL -lXext -lX11";
+		# XFree 4.0 Direct Rendering Interface and GLX 
+		$opengl_dep_dir         = "/usr/X11R6";
+		$opengl_dep_include     = "-I$opengl_dep_dir/include";
+		$opengl_dep_library     = "-L$opengl_dep_dir/lib";
+		$opengl_dep_libs        = "-lGL"; 
+		# $opengl_dep_libs      = "-L/usr/X11R6/lib -lGL -lXext -lX11";
 
-    if ($config_icc) {
-      # for compiling with Intel C/C++:
+		if ($config_icc) {
+			# for compiling with Intel C/C++:
 #      $arch_cc          = "icc";
 #      $arch_ccpp        = "icpc";
-      # version supporting RHEL 4.x
-      $arch_cc          = "/usr/local/encap/intel-cc-12.2011.2.137/bin/icc";
-      $arch_ccpp        = "/usr/local/encap/intel-cc-12.2011.2.137/bin/icpc";
-      $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m32 -msse2 -O3";
-      $arch_depend_flag = "-MM";
-      $arch_copts       = "-Wall -Wno-unknown-pragmas -m32 -msse2 -O3";
-      $arch_shlibname   = "so";
-      $arch_shcppopts   = "-fPIC";
-      $arch_shldopts    = "";
+			# version supporting RHEL 4.x
+			$arch_cc          = "/usr/local/encap/intel-cc-12.2011.2.137/bin/icc";
+			$arch_ccpp        = "/usr/local/encap/intel-cc-12.2011.2.137/bin/icpc";
+			$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m32 -msse2 -O3";
+			$arch_depend_flag = "-MM";
+			$arch_copts       = "-Wall -Wno-unknown-pragmas -m32 -msse2 -O3";
+			$arch_shlibname   = "so";
+			$arch_shcppopts   = "-fPIC";
+			$arch_shldopts    = "";
 
-      if ($config_static) {
-        # link everything statically (this won't work due to libGL issues)
-        $arch_lopts     = "-static";
-      } else {
-        # link the Intel compiler libraries statically, and use the GCC C++ libs
-        # $arch_lopts   = "-static-libcxa -cxxlib-gcc";
-        # dynamically link all libs, and use Intel libs where possible
-        $arch_lopts     = "-rdynamic ";
-      }
-      $arch_lopts       .= "-i-static ";
-    } else {
-      # compling with GCC
-      $arch_cc          = "gcc";
-      $arch_ccpp        = "g++";
-      $arch_depend_flag = "-MM";
-      $arch_shld        = "g++ -shared";
-      $arch_shlibname   = "so";
-      $arch_shcppopts   = "-fPIC";
-      $arch_shldopts    = "";
-      $arch_opt_flag    = "-m32 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O3";
-      $arch_copts       = "-m32 -Wall -Wno-unknown-pragmas -O3";
+			if ($config_static) {
+				# link everything statically (this won't work due to libGL issues)
+				$arch_lopts     = "-static";
+			} else {
+				# link the Intel compiler libraries statically, and use the GCC C++ libs
+				# $arch_lopts   = "-static-libcxa -cxxlib-gcc";
+				# dynamically link all libs, and use Intel libs where possible
+				$arch_lopts     = "-rdynamic ";
+			}
+			$arch_lopts       .= "-i-static ";
+		} else {
+			# compling with GCC
+			$arch_cc          = "gcc";
+			$arch_ccpp        = "g++";
+			$arch_depend_flag = "-MM";
+			$arch_shld        = "g++ -shared";
+			$arch_shlibname   = "so";
+			$arch_shcppopts   = "-fPIC";
+			$arch_shldopts    = "";
+			$arch_opt_flag    = "-m32 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O3";
+			$arch_copts       = "-m32 -Wall -Wno-unknown-pragmas -O3";
 
-      if ($config_static) {
-        $arch_lopts       = "-static";
-        $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
-      } else {
-        $arch_lopts       = "";
-       # -rpath causes problems for people running Chromium..
-       #      $arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
-       $mesa_libs        = "-lGL -L/usr/X11R6/lib -lXext -lX11";
-      }
-      if ($config_shared) {
-        $arch_lopts       = "-shared";
-      }
-    }
+			if ($config_static) {
+				$arch_lopts       = "-static";
+				$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+			} else {
+				$arch_lopts       = "";
+			 # -rpath causes problems for people running Chromium..
+			 #      $arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
+			 $mesa_libs        = "-lGL -L/usr/X11R6/lib -lXext -lX11";
+			}
+			if ($config_shared) {
+				$arch_lopts       = "-shared";
+			}
+		}
 
-    $arch_cppopts     = "";
-    if ($config_cuda) {
-      $arch_nvcc     = "/usr/local/cuda-4.0/bin/nvcc";
-      $arch_nvccflags  = "--ptxas-options=-v " . 
-                    "-gencode arch=compute_13,code=sm_13 " .
-                    "-gencode arch=compute_20,code=sm_20 " .
-                    "-gencode arch=compute_20,code=compute_20 " .
-                    "--ftz=true ";
-      $arch_nvccflags .= " --machine 32 -O3 -Xcompiler \"-m32\" $cuda_include";
-      $cuda_library     = "-L/usr/local/cuda-4.0/lib";
-      $cuda_libs       = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart";
-    }
-    # this is to make tcl happy
-    # also needed for plugins
-    $system_libs .= " -ldl";
-    if ($config_shared) {
-      $arch_opt_flag   .= " -fPIC";
-      $arch_copts      .= " -fPIC";
-      $arch_nvccflags  .= " -Xcompiler -fPIC";
-      $arch_lopts       = "-shared";
-      $arch_cppopts    .= " -DVMD_SHARED";
-    }
+		$arch_cppopts     = "";
+		if ($config_cuda) {
+			$arch_nvcc     = "/usr/local/cuda-4.0/bin/nvcc";
+			$arch_nvccflags  = "--ptxas-options=-v " . 
+										"-gencode arch=compute_13,code=sm_13 " .
+										"-gencode arch=compute_20,code=sm_20 " .
+										"-gencode arch=compute_20,code=compute_20 " .
+										"--ftz=true ";
+			$arch_nvccflags .= " --machine 32 -O3 -Xcompiler \"-m32\" $cuda_include";
+			$cuda_library     = "-L/usr/local/cuda-4.0/lib";
+			$cuda_libs       = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart";
+		}
+		# this is to make tcl happy
+		# also needed for plugins
+		$system_libs .= " -ldl";
+		if ($config_shared) {
+			$arch_opt_flag   .= " -fPIC";
+			$arch_copts      .= " -fPIC";
+			$arch_nvccflags  .= " -Xcompiler -fPIC";
+			$arch_lopts       = "-shared";
+			$arch_cppopts    .= " -DVMD_SHARED";
+		}
  
-    if ($config_python) {
-      # this is to make python happy
-      $system_libs .= " -lutil";
-    }
+		if ($config_python) {
+			# this is to make python happy
+			$system_libs .= " -lutil";
+		}
 
-    # this is necessary for the embedded Python interpreter to dynamically
-    # load shared libraries.  It increases the size of the binary by 200k.
-    $arch_lopts .= " -Xlinker -export-dynamic";
+		# this is necessary for the embedded Python interpreter to dynamically
+		# load shared libraries.  It increases the size of the binary by 200k.
+		$arch_lopts .= " -Xlinker -export-dynamic";
 }
 
 
 
 if ($config_arch eq "LINUXAMD64") {
-    $def_imageviewer="display %s";
-    if ($config_lp64) {
-      print "LP64 ABI is already the default on this platform.\n";
-    }
+		$def_imageviewer="display %s";
+		if ($config_lp64) {
+			print "LP64 ABI is already the default on this platform.\n";
+		}
 
-    if ($config_icc) {
-      # for compiling with Intel C/C++:
-      $arch_cc          = "icc";
-      $arch_ccpp        = "icpc";
-      if ($config_avx512) {
-        $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -xMIC-AVX512 -O3";
-        $arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -xMIC-AVX512 -O3";
-      } else {
-        $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
-        $arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
-      }
-      $arch_depend_flag = "-MM";
-      $arch_shlibname   = "so";
-      $arch_shcppopts   = "-fPIC";
-      $arch_shldopts    = "";
+		if ($config_icc) {
+			# for compiling with Intel C/C++:
+			$arch_cc          = "icc";
+			$arch_ccpp        = "icpc";
+			if ($config_avx512) {
+				$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -xMIC-AVX512 -O3";
+				$arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -xMIC-AVX512 -O3";
+			} else {
+				$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
+				$arch_copts       = "-Wall -Wno-unknown-pragmas -m64 -msse2 -O3";
+			}
 
-      if ($config_static) {
-        # link everything statically (this won't work due to libGL issues)
-        $arch_lopts     = "-static";
-      } else {
-        # link the Intel compiler libraries statically, and use the GCC C++ libs
-        # $arch_lopts   = "-static-libcxa -cxxlib-gcc";
-        # dynamically link all libs, and use Intel libs where possible
-        $arch_lopts     = "-rdynamic ";
-      }
-      $arch_lopts       .= "-static-intel ";
-    } elsif ($config_pgcc) {
-      # for compiling with Intel C/C++:
-      $arch_cc          = "pgcc";
-      $arch_ccpp        = "pgc++";
-      $arch_opt_flag    = "-m64 ";
-      $arch_depend_flag = "-MM";
-      $arch_copts       = "-m64 ";
-      $arch_shlibname   = "so";
-      $arch_shcppopts   = "-fPIC";
-      $arch_shldopts    = "";
+			$arch_depend_flag = "-MM";
+			$arch_shlibname   = "so";
+			$arch_shcppopts   = "-fPIC";
+			$arch_shldopts    = "";
 
-      if ($config_static) {
-        # link everything statically (this won't work due to libGL issues)
-        $arch_lopts     = "-static";
-      } else {
-        $arch_lopts     = "-rdynamic ";
-      }
-    } elsif ($config_clang) {
-      $arch_cc          = "clang";
-      $arch_ccpp        = "clang++";
-      $arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math ";
-      $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math ";
-      $arch_depend_flag = "-MM";
-    } else {
-      # for compiling with g++:
-      $arch_cc		= "gcc";
-      $arch_ccpp  	= "g++";
-      $arch_opt_flag	= "-m64 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O6 -ffast-math";
-      $arch_depend_flag   = "-MM";
-      $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O6 -ffast-math";
+			if ($config_static) {
+				# link everything statically (this won't work due to libGL issues)
+				$arch_lopts     = "-static";
+			} else {
+				# link the Intel compiler libraries statically, and use the GCC C++ libs
+				# $arch_lopts   = "-static-libcxa -cxxlib-gcc";
+				# dynamically link all libs, and use Intel libs where possible
+				$arch_lopts     = "-rdynamic ";
+			}
+			$arch_lopts       .= "-static-intel ";
+		} elsif ($config_pgcc) {
+			# for compiling with Intel C/C++:
+			$arch_cc          = "pgcc";
+			$arch_ccpp        = "pgc++";
+			$arch_opt_flag    = "-m64 ";
+			$arch_depend_flag = "-MM";
+			$arch_copts       = "-m64 ";
+			$arch_shlibname   = "so";
+			$arch_shcppopts   = "-fPIC";
+			$arch_shldopts    = "";
 
-      # so far only STATIC version tested
-      if ($config_static) {
-        $arch_lopts	= "-static"; 
-      } else {
-        $arch_lopts	= "-rdynamic";
-      }
-    }
+			if ($config_static) {
+				# link everything statically (this won't work due to libGL issues)
+				$arch_lopts     = "-static";
+			} else {
+				$arch_lopts     = "-rdynamic ";
+			}
+		} elsif ($config_clang) {
+			$arch_cc          = "clang";
+			$arch_ccpp        = "clang++";
+			$arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math ";
+			$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math ";
+			$arch_depend_flag = "-MM";
+		} else {
+			# for compiling with g++:
+			$arch_cc		= "gcc";
+			$arch_ccpp  	= "g++";
+			$arch_opt_flag	= "-m64 -fno-for-scope -Wno-deprecated -Wall -Wno-unknown-pragmas -O6 -ffast-math";
+			$arch_depend_flag   = "-MM";
+			$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O6 -ffast-math";
 
-    if ($config_cuda) {
-      $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-      $cuda_library     = "-L/usr/local/cuda/lib64";
-    }
+			# so far only STATIC version tested
+			if ($config_static) {
+				$arch_lopts	= "-static"; 
+			} else {
+				$arch_lopts	= "-rdynamic";
+			}
+		}
 
-    $arch_lex		= "flex"; # has problems with vendor lex
+		if ($config_cxx11) {
+			$arch_opt_flag .= " -std=c++11"
+		}
 
-    # added a test so that EGL support works for now, but these bits of
-    # override code probably date back to RHEL4.x or earlier, and
-    # they likely serve no useful purpose going forward.
-    if (!$config_opengl_dispatch) {
-      $opengl_dep_libs	= "-L/usr/X11R6/lib64 -lGL -lX11";
-      $mesa_libs          = "-lMesaGL -L/usr/X11R6/lib64 -lXext -lX11";
-    }
+		if ($config_cuda) {
+			$arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+			$cuda_library     = "-L/usr/local/cuda/lib64";
+		}
 
-    # this is to make tcl happy
-    # also needed for plugins
-    $system_libs .= " -ldl";
+		$arch_lex		= "flex"; # has problems with vendor lex
 
-    if ($config_python) {
-      # this is to make python happy
-      $system_libs .= " -lutil";
-    }
-    if ($config_shared) {
-      $arch_opt_flag   .= " -fPIC";
-      $arch_copts      .= " -fPIC";
-      $arch_nvccflags  .= " -Xcompiler -fPIC";
-      $arch_lopts       = "-shared";
-      $arch_cppopts    .= " -DVMD_SHARED";
-    }
+		# added a test so that EGL support works for now, but these bits of
+		# override code probably date back to RHEL4.x or earlier, and
+		# they likely serve no useful purpose going forward.
+		if (!$config_opengl_dispatch) {
+			$opengl_dep_libs	= "-L/usr/X11R6/lib64 -lGL -lX11";
+			$mesa_libs          = "-lMesaGL -L/usr/X11R6/lib64 -lXext -lX11";
+		}
+
+		# this is to make tcl happy
+		# also needed for plugins
+		$system_libs .= " -ldl";
+
+		if ($config_python) {
+			# this is to make python happy
+			$system_libs .= " -lutil";
+		}
+		if ($config_shared) {
+			$arch_opt_flag   .= " -fPIC";
+			$arch_copts      .= " -fPIC";
+			$arch_nvccflags  .= " -Xcompiler -fPIC";
+			$arch_lopts       = "-shared";
+			$arch_cppopts    .= " -DVMD_SHARED";
+		}
 }
 
 
 if ($config_arch eq "LINUXARM64") {
-  $tcl_libs         = "-ltcl8.5";
-  if ($config_tk) { $tcl_libs = "-ltk8.5 -lX11 " . $tcl_libs; }
-  $vmd_libs          = "$tcl_libs -lz";
+	$tcl_libs         = "-ltcl8.5";
+	if ($config_tk) { $tcl_libs = "-ltk8.5 -lX11 " . $tcl_libs; }
+	$vmd_libs          = "$tcl_libs -lz";
 
-  $arch_nvcc     = "/usr/local/cuda/bin/nvcc";
-  $arch_nvccflags   = "--ptxas-options=-v " .
-                    "-gencode arch=compute_30,code=compute_30 " .
-                    "-gencode arch=compute_70,code=compute_70 " .
-                    "--ftz=true ";
-  $cuda_library     = "-L/usr/local/cuda/lib64";
-  $arch_cc       = "cc";
-  $arch_ccpp     = "c++";
-  $arch_copts       = "-Wall -Wno-unknown-pragmas -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
-  $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
-  $arch_lex      = "flex";
+	$arch_nvcc     = "/usr/local/cuda/bin/nvcc";
+	$arch_nvccflags   = "--ptxas-options=-v " .
+										"-gencode arch=compute_30,code=compute_30 " .
+										"-gencode arch=compute_70,code=compute_70 " .
+										"--ftz=true ";
+	$cuda_library     = "-L/usr/local/cuda/lib64";
+	$arch_cc       = "cc";
+	$arch_ccpp     = "c++";
+	$arch_copts       = "-Wall -Wno-unknown-pragmas -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
+	$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
+	$arch_lex      = "flex";
 
-  # needed for plugins
-  $arch_lopts       = "-lm";
-  $system_libs .= " -ldl";
+	# needed for plugins
+	$arch_lopts       = "-lm";
+	$system_libs .= " -ldl";
 }
 
 
 if ($config_arch eq "LINUXCARMA") {
-  # Tcl 8.6.0 is reliable on CARMA, 8.5.x is not...
-  $tcl_libs         = "-ltcl8.6";  
-  if ($config_tk) { $tcl_libs = "-ltk8.6 -lX11 " . $tcl_libs; }
-  $vmd_libs          = "$tcl_libs -lz";
+	# Tcl 8.6.0 is reliable on CARMA, 8.5.x is not...
+	$tcl_libs         = "-ltcl8.6";  
+	if ($config_tk) { $tcl_libs = "-ltk8.6 -lX11 " . $tcl_libs; }
+	$vmd_libs          = "$tcl_libs -lz";
 
-  $arch_nvcc     = "/usr/local/cuda-5.5/bin/nvcc";
-  $arch_nvccflags   = "--ptxas-options=-v " . 
-                    "-gencode arch=compute_20,code=sm_20 " .
-                    "-gencode arch=compute_30,code=sm_30 " .
-                    "-gencode arch=compute_35,code=sm_35 " .
-                    "-gencode arch=compute_20,code=compute_20 " .
-                    "-gencode arch=compute_30,code=compute_30 " .
-                    "--ftz=true ";
-  $cuda_library     = "-L/usr/local/cuda/lib";
-  $arch_cc       = "cc";
-  $arch_ccpp     = "c++";
-  $arch_copts       = "-Wall -Wno-unknown-pragmas -march=armv7-a -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=vfpv3-d16 -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
-  $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -march=armv7-a -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=vfpv3-d16 -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
-  $arch_lex      = "flex";
+	$arch_nvcc     = "/usr/local/cuda-5.5/bin/nvcc";
+	$arch_nvccflags   = "--ptxas-options=-v " . 
+										"-gencode arch=compute_20,code=sm_20 " .
+										"-gencode arch=compute_30,code=sm_30 " .
+										"-gencode arch=compute_35,code=sm_35 " .
+										"-gencode arch=compute_20,code=compute_20 " .
+										"-gencode arch=compute_30,code=compute_30 " .
+										"--ftz=true ";
+	$cuda_library     = "-L/usr/local/cuda/lib";
+	$arch_cc       = "cc";
+	$arch_ccpp     = "c++";
+	$arch_copts       = "-Wall -Wno-unknown-pragmas -march=armv7-a -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=vfpv3-d16 -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
+	$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -march=armv7-a -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=vfpv3-d16 -ffast-math -fomit-frame-pointer -fno-strict-aliasing -O3";
+	$arch_lex      = "flex";
 
-  # needed for plugins
-  $arch_lopts       = "-lm";
-  $system_libs .= " -ldl";
+	# needed for plugins
+	$arch_lopts       = "-lm";
+	$system_libs .= " -ldl";
 }
 
 
 if ($config_arch eq "LINUXPPC64") {
-    $def_imageviewer="display %s";
-    if ($config_lp64) {
-      print "No LP64 ABI on this platform currently.\n";
-    }
+		$def_imageviewer="display %s";
+		if ($config_lp64) {
+			print "No LP64 ABI on this platform currently.\n";
+		}
 
-    $arch_cc          = "gcc";
-    $arch_ccpp        = "g++";
-    $arch_depend_flag = "-MM";
-    $arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
-    $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
+		$arch_cc          = "gcc";
+		$arch_ccpp        = "g++";
+		$arch_depend_flag = "-MM";
+		$arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
+		$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math";
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
+		}
 
-    $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
-    $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
-    $arch_cppopts     = "";
+		$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
+		$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		$arch_cppopts     = "";
 
-    # this is to make tcl happy
-    # also needed for plugins
-    $system_libs .= " -ldl";
+		# this is to make tcl happy
+		# also needed for plugins
+		$system_libs .= " -ldl";
 }
 
 
 if ($config_arch eq "MACOSX") {
-    $def_imageviewer="/usr/bin/open %s";
+		$def_imageviewer="/usr/bin/open %s";
 
-    if ($config_lp64) {
-      print "No LP64 ABI on this platform currently.\n";
-    }
+		if ($config_lp64) {
+			print "No LP64 ABI on this platform currently.\n";
+		}
 
-    $fltk_include     = "-I$fltk_dir/fltk";
-    $fltk_library     = "-L$fltk_dir/MACOSX";
-    $fltk_libs        = "-lfltk -lX11";
+		$fltk_include     = "-I$fltk_dir/fltk";
+		$fltk_library     = "-L$fltk_dir/MACOSX";
+		$fltk_libs        = "-lfltk -lX11";
 
-    # Set Python paths to use the system-provided Python rather than
-    # our own, since Apple MacOS X 10.4.x or newer includes Python 2.3
-    # by default.
-    $python_include     = "-F/System/Library/Frameworks";
-    $python_library     = "";
-    $python_libs        = "-framework Python -lpthread";
+		# Set Python paths to use the system-provided Python rather than
+		# our own, since Apple MacOS X 10.4.x or newer includes Python 2.3
+		# by default.
+		$python_include     = "-F/System/Library/Frameworks";
+		$python_library     = "";
+		$python_libs        = "-framework Python -lpthread";
 
-    $arch_cc          = "cc";
-    $arch_ccpp        = "c++";
-    $arch_depend_flag = "-MM";
-    $arch_opt_flag    = "-fPIC -Os -ffast-math";
-    $arch_copts       = "-fPIC -Os -ffast-math";
-    $arch_cppopts     = "";
+		$arch_cc          = "cc";
+		$arch_ccpp        = "c++";
+		$arch_depend_flag = "-MM";
+		$arch_opt_flag    = "-fPIC -Os -ffast-math";
+		$arch_copts       = "-fPIC -Os -ffast-math";
+		$arch_cppopts     = "";
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "";
+		}
 
-    # Mesa version uses X11 just like other Unix versions,
-    # but the OpenGL version uses native MacOS X, no X11.
-    if ($config_mesa) {
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Carbon -lXext -lX11";
-    } elsif (!$config_fltkopengl) {
-      # OpenGL version using X11 just like other Unix versions,
-      # but the normal OpenGL version uses native MacOS X, no X11.
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Carbon -lXext -lX11";
-      $tcl_libs         = "-ltcl8.5-x11";
-      if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
-      $vmd_libs         = "$tcl_libs";
-    } else {
-      ##
-      ## MacOS X native builds using Tcl/Tck frameworks
-      ## 
-      ## use the Tcl/Tk frameworks provided by apple, when we use their Python
+		# Mesa version uses X11 just like other Unix versions,
+		# but the OpenGL version uses native MacOS X, no X11.
+		if ($config_mesa) {
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Carbon -lXext -lX11";
+		} elsif (!$config_fltkopengl) {
+			# OpenGL version using X11 just like other Unix versions,
+			# but the normal OpenGL version uses native MacOS X, no X11.
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Carbon -lXext -lX11";
+			$tcl_libs         = "-ltcl8.5-x11";
+			if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
+			$vmd_libs         = "$tcl_libs";
+		} else {
+			##
+			## MacOS X native builds using Tcl/Tck frameworks
+			## 
+			## use the Tcl/Tk frameworks provided by apple, when we use their Python
 #      $tcl_include      = "-F/System/Library/Frameworks";
 #      $tcl_library      = "-F/System/Library/Frameworks";
 
-      ## use our own Tcl/Tk framework builds when not compiling with Python, 
-      ## as Apple's currently shipping versions are quite buggy
-      $tcl_include      = "-I$stock_tcl_include_dir";
-      if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.5/Headers"; }
-      $tcl_library      = "-F$stock_tcl_library_dir";
-      if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
-      $tcl_libs         = "-framework Tcl";
-      if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
+			## use our own Tcl/Tk framework builds when not compiling with Python, 
+			## as Apple's currently shipping versions are quite buggy
+			$tcl_include      = "-I$stock_tcl_include_dir";
+			if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.5/Headers"; }
+			$tcl_library      = "-F$stock_tcl_library_dir";
+			if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
+			$tcl_libs         = "-framework Tcl";
+			if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
 
-      $vmd_include       = "$tcl_include";
-      $vmd_library       = "$tcl_library";
-      $vmd_libs          = "$tcl_libs";
+			$vmd_include       = "$tcl_include";
+			$vmd_library       = "$tcl_library";
+			$vmd_libs          = "$tcl_libs";
 
-      # MacOS 10.3 stuff
-      $vmd_library .= " -Wl,-executable_path . -lmx";
+			# MacOS 10.3 stuff
+			$vmd_library .= " -Wl,-executable_path . -lmx";
  
-      $fltk_libs        = "-lfltk";
-      $opengl_include   = $opengl_include;
-      $opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Carbon";
+			$fltk_libs        = "-lfltk";
+			$opengl_include   = $opengl_include;
+			$opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Carbon";
 #      $arch_compilerc   = "/Developer/Tools/Rez";
-      $arch_compilerc   = "/usr/bin/Rez";
-      $arch_rcflags     = "-t APPL -o ../MACOSX/vmd_MACOSX vmdmac.r";
-    }
+			$arch_compilerc   = "/usr/bin/Rez";
+			$arch_rcflags     = "-t APPL -o ../MACOSX/vmd_MACOSX vmdmac.r";
+		}
 
-    $mesa_include     = $mesa_include . " -I/usr/X11R6/include";
-    $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		$mesa_include     = $mesa_include . " -I/usr/X11R6/include";
+		$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
 
-    # no libm.a on MacOS-X
-    $system_include   = $system_include;
-    $system_libs      = " -framework Carbon ";
+		# no libm.a on MacOS-X
+		$system_include   = $system_include;
+		$system_libs      = " -framework Carbon ";
 }
 
 
 if ($config_arch eq "MACOSXARM64") {
-    $def_imageviewer="/usr/bin/open %s";
+		$def_imageviewer="/usr/bin/open %s";
 
-    ## XXX 64-bit MacOS X 11.x builds currently require the bleeding-edge
-    ##     FLTK 1.4.x development branch for cocoa support
-    $fltk_include     = "-I$fltk_dir/fltk";
-    $fltk_library     = "-L$fltk_dir/$config_arch";
-    $fltk_libs        = "-lfltk -lX11";
+		## XXX 64-bit MacOS X 11.x builds currently require the bleeding-edge
+		##     FLTK 1.4.x development branch for cocoa support
+		$fltk_include     = "-I$fltk_dir/fltk";
+		$fltk_library     = "-L$fltk_dir/$config_arch";
+		$fltk_libs        = "-lfltk -lX11";
 
-    # Set Python paths to use the system-provided Python rather than
-    # our own, since Apple MacOS X 10.4.x or newer includes Python 2.3
-    # by default.
-    $python_include     = "-F/System/Library/Frameworks";
-    $python_library     = "";
-    $python_libs        = "-framework Python -lpthread";
+		# Set Python paths to use the system-provided Python rather than
+		# our own, since Apple MacOS X 10.4.x or newer includes Python 2.3
+		# by default.
+		$python_include     = "-F/System/Library/Frameworks";
+		$python_library     = "";
+		$python_libs        = "-framework Python -lpthread";
 
-    $arch_cc          = "cc";
-    $arch_ccpp        = "c++";
-    $arch_depend_flag = "-MM";
-    $arch_opt_flag    = "-fPIC -Os -ffast-math";
-    $arch_copts       = "-fPIC -Os -ffast-math";
-    $arch_cppopts = "";
+		$arch_cc          = "cc";
+		$arch_ccpp        = "c++";
+		$arch_depend_flag = "-MM";
+		$arch_opt_flag    = "-fPIC -Os -ffast-math";
+		$arch_copts       = "-fPIC -Os -ffast-math";
+		$arch_cppopts = "";
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "";
+		}
 
-    # Mesa version uses X11 just like other Unix versions,
-    # but the OpenGL version uses native MacOS X, no X11.
-    if ($config_mesa) {
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Cocoa -lXext -lX11";
-    } elsif (!$config_fltkopengl) {
-      # OpenGL version using X11 just like other Unix versions,
-      # but the normal OpenGL version uses native MacOS X, no X11.
-      $arch_opt_flag    .= " -DVMDNOMACBUNDLE";
-      $arch_copts       .= " -DVMDNOMACBUNDLE";
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Cocoa -lXext -lX11";
-      ##
-      ## XXX workaround a documented MacOS X linker problem when building 
-      ## things using X11+OpenGL:
-      ##   http://developer.apple.com/qa/qa2007/qa1567.html
-      ##
-      $opengl_dep_libs  .= " -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib";
-      $tcl_libs         = "-ltcl8.5-x11";
-      if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
-      $vmd_libs          = "$tcl_libs";
-    } else {
-      ##
-      ## MacOS X native builds using Tcl/Tck frameworks
-      ## 
-      ## use the Tcl/Tk frameworks provided by apple, when we use their Python
+		# Mesa version uses X11 just like other Unix versions,
+		# but the OpenGL version uses native MacOS X, no X11.
+		if ($config_mesa) {
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Cocoa -lXext -lX11";
+		} elsif (!$config_fltkopengl) {
+			# OpenGL version using X11 just like other Unix versions,
+			# but the normal OpenGL version uses native MacOS X, no X11.
+			$arch_opt_flag    .= " -DVMDNOMACBUNDLE";
+			$arch_copts       .= " -DVMDNOMACBUNDLE";
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Cocoa -lXext -lX11";
+			##
+			## XXX workaround a documented MacOS X linker problem when building 
+			## things using X11+OpenGL:
+			##   http://developer.apple.com/qa/qa2007/qa1567.html
+			##
+			$opengl_dep_libs  .= " -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib";
+			$tcl_libs         = "-ltcl8.5-x11";
+			if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
+			$vmd_libs          = "$tcl_libs";
+		} else {
+			##
+			## MacOS X native builds using Tcl/Tck frameworks
+			## 
+			## use the Tcl/Tk frameworks provided by apple, when we use their Python
 #      $tcl_include      = "-F/System/Library/Frameworks";
 #      $tcl_library      = "-F/System/Library/Frameworks";
 
-      ## use our own Tcl/Tk framework builds when not compiling with Python, 
-      ## as Apple's currently shipping versions are quite buggy
-      $tcl_include      = "-I$stock_tcl_include_dir";
-      if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.6/Headers"; }
-      $tcl_library      = "-F$stock_tcl_library_dir";
-      if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
-      $tcl_libs         = "-framework Tcl";
-      if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
+			## use our own Tcl/Tk framework builds when not compiling with Python, 
+			## as Apple's currently shipping versions are quite buggy
+			$tcl_include      = "-I$stock_tcl_include_dir";
+			if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.6/Headers"; }
+			$tcl_library      = "-F$stock_tcl_library_dir";
+			if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
+			$tcl_libs         = "-framework Tcl";
+			if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
 
-      $vmd_include       = "$tcl_include";
-      $vmd_library       = "$tcl_library";
-      $vmd_libs          = "$tcl_libs";
+			$vmd_include       = "$tcl_include";
+			$vmd_library       = "$tcl_library";
+			$vmd_libs          = "$tcl_libs";
 
-      # MacOS 10.3 stuff
-      $vmd_library .= " -Wl,-executable_path . -lmx";
+			# MacOS 10.3 stuff
+			$vmd_library .= " -Wl,-executable_path . -lmx";
  
-      $fltk_libs        = "-lfltk";
-      $opengl_include   = $opengl_include;
-      $opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Cocoa";
-      $arch_compilerc   = "/usr/bin/Rez";
-      $arch_rcflags     = "-t APPL -o ../MACOSXX86_64/vmd_MACOSXX86_64 vmdmac.r";
-    }
+			$fltk_libs        = "-lfltk";
+			$opengl_include   = $opengl_include;
+			$opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Cocoa";
+			$arch_compilerc   = "/usr/bin/Rez";
+			$arch_rcflags     = "-t APPL -o ../MACOSXARM64/vmd_MACOSXARM64 vmdmac.r";
+		}
 
-    $mesa_include     = $mesa_include . " -I/usr/X11R6/include";
-    $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		$mesa_include     = $mesa_include . " -I/usr/X11R6/include";
+		$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
 
-    if ($config_cuda) {
-      # This is a hack since we don't have a unified nvcc front-end install yet
-      $arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
-      $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-      $cuda_dir         = "/usr/local/cuda-8.0";
-      $cuda_library     = "-L/usr/local/cuda-8.0/lib";
-    }
-    if ($config_opencl) {
-      $opencl_libs        = "-framework OpenCL";
-    }
+		if ($config_cuda) {
+			# This is a hack since we don't have a unified nvcc front-end install yet
+			$arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
+			$arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+			$cuda_dir         = "/usr/local/cuda-8.0";
+			$cuda_library     = "-L/usr/local/cuda-8.0/lib";
+		}
+		if ($config_opencl) {
+			$opencl_libs        = "-framework OpenCL";
+		}
 
-    # no libm.a on MacOS-X
-    $system_include   = $system_include;
-    $system_libs      = " -framework Cocoa ";
+		# no libm.a on MacOS-X
+		$system_include   = $system_include;
+		$system_libs      = " -framework Cocoa ";
 }
 
 
 if ($config_arch eq "MACOSXX86" || $config_arch eq "MACOSXX86_64") {
-    $def_imageviewer="/usr/bin/open %s";
+		$def_imageviewer="/usr/bin/open %s";
 
-    if ($config_lp64) {
-      ## XXX 64-bit MacOS X 10.15 builds currently require the bleeding-edge
-      ##     FLTK 1.4.x developmental branch for stable cocoa support
-      $fltk_include     = "-I$fltk_dir/fltk";
-    } else {
-      $fltk_include     = "-I$fltk_dir/fltk";
-    }
-    $fltk_library     = "-L$fltk_dir/$config_arch";
-    $fltk_libs        = "-lfltk -lX11";
+		if ($config_lp64) {
+			## XXX 64-bit MacOS X 10.15 builds currently require the bleeding-edge
+			##     FLTK 1.4.x developmental branch for stable cocoa support
+			$fltk_include     = "-I$fltk_dir/fltk";
+		} else {
+			$fltk_include     = "-I$fltk_dir/fltk";
+		}
+		$fltk_library     = "-L$fltk_dir/$config_arch";
+		$fltk_libs        = "-lfltk -lX11";
 
-    # Set Python paths to use the system-provided Python rather than our own
-    $python_include     = "-F/System/Library/Frameworks";
-    $python_library     = "";
-    $python_libs        = "-framework Python -lpthread";
+		# Set Python paths to use the system-provided Python rather than our own
+		$python_include     = "-F/System/Library/Frameworks";
+		$python_library     = "";
+		$python_libs        = "-framework Python -lpthread";
 
-    if ($config_lp64) {
-      $arch_cc          = "cc";
-      $arch_ccpp        = "c++";
-      $arch_depend_flag = "-MM";
-      $arch_opt_flag    = "-m64 -fPIC -Os -ffast-math";
-      $arch_copts       = "-m64 -fPIC -Os -ffast-math";
-    } else {
-      $arch_cc          = "cc";
-      $arch_ccpp        = "c++";
-      $arch_depend_flag = "-MM";
-      $arch_opt_flag    = "-m32 -fPIC -Os -ffast-math";
-      $arch_copts       = "-m32 -fPIC -Os -ffast-math";
-    }
-    $arch_cppopts = "";
+		if ($config_lp64) {
+			$arch_cc          = "cc";
+			$arch_ccpp        = "c++";
+			$arch_depend_flag = "-MM";
+			$arch_opt_flag    = "-m64 -fPIC -Os -ffast-math";
+			$arch_copts       = "-m64 -fPIC -Os -ffast-math";
+		} else {
+			$arch_cc          = "cc";
+			$arch_ccpp        = "c++";
+			$arch_depend_flag = "-MM";
+			$arch_opt_flag    = "-m32 -fPIC -Os -ffast-math";
+			$arch_copts       = "-m32 -fPIC -Os -ffast-math";
+		}
+		$arch_cppopts = "";
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "";
+		}
 
-    # Mesa version uses X11 just like other Unix versions,
-    # but the OpenGL version uses native MacOS X, no X11.
-    if ($config_mesa) {
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      if ($config_lp64) {
-        $opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Cocoa -lXext -lX11";
-      } else {
-        $opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Carbon -lXext -lX11";
-      }
-    } elsif (!$config_fltkopengl) {
-      # OpenGL version using X11 just like other Unix versions,
-      # but the normal OpenGL version uses native MacOS X, no X11.
-      $arch_opt_flag    .= " -DVMDNOMACBUNDLE";
-      $arch_copts       .= " -DVMDNOMACBUNDLE";
-      $fltk_libs        = "-lfltk-x11 -lX11";
-      $opengl_include   = $opengl_include . " -I/usr/X11R6/include";
-      if ($config_lp64) {
-        $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Cocoa -lXext -lX11";
-      } else {
-        $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Carbon -lXext -lX11";
-      }
-      ##
-      ## XXX workaround a documented MacOS X linker problem when building 
-      ## things using X11+OpenGL:
-      ##   http://developer.apple.com/qa/qa2007/qa1567.html
-      ##
-      $opengl_dep_libs  .= " -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib";
-      $tcl_libs         = "-ltcl8.5-x11";
-      if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
-      $vmd_libs          = "$tcl_libs";
-    } else {
-      ##
-      ## MacOS X native builds using Tcl/Tck frameworks
-      ## 
-      ## use the Tcl/Tk frameworks provided by apple, when we use their Python
+		# Mesa version uses X11 just like other Unix versions,
+		# but the OpenGL version uses native MacOS X, no X11.
+		if ($config_mesa) {
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			if ($config_lp64) {
+				$opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Cocoa -lXext -lX11";
+			} else {
+				$opengl_dep_libs  = "-L/usr/X11R6/lib -framework OpenGL -framework AGL -framework Carbon -lXext -lX11";
+			}
+		} elsif (!$config_fltkopengl) {
+			# OpenGL version using X11 just like other Unix versions,
+			# but the normal OpenGL version uses native MacOS X, no X11.
+			$arch_opt_flag    .= " -DVMDNOMACBUNDLE";
+			$arch_copts       .= " -DVMDNOMACBUNDLE";
+			$fltk_libs        = "-lfltk-x11 -lX11";
+			$opengl_include   = $opengl_include . " -I/usr/X11R6/include";
+			if ($config_lp64) {
+				$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Cocoa -lXext -lX11";
+			} else {
+				$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -framework Carbon -lXext -lX11";
+			}
+			##
+			## XXX workaround a documented MacOS X linker problem when building 
+			## things using X11+OpenGL:
+			##   http://developer.apple.com/qa/qa2007/qa1567.html
+			##
+			$opengl_dep_libs  .= " -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib";
+			$tcl_libs         = "-ltcl8.5-x11";
+			if ($config_tk) { $tcl_libs = "-ltk8.5-x11 -lX11 " . $tcl_libs; }
+			$vmd_libs          = "$tcl_libs";
+		} else {
+			##
+			## MacOS X native builds using Tcl/Tck frameworks
+			## 
+			## use the Tcl/Tk frameworks provided by apple, when we use their Python
 #      $tcl_include      = "-F/System/Library/Frameworks";
 #      $tcl_library      = "-F/System/Library/Frameworks";
 
-      ## use our own Tcl/Tk framework builds when not compiling with Python, 
-      ## as Apple's currently shipping versions are quite buggy
-      $tcl_include      = "-I$stock_tcl_include_dir";
-      if ($config_lp64) {
-        # 64-bit MacOS X builds (10.15 or 11.0) require Tcl/Tk 8.6 or later
-        if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.6/Headers"; }
-      } else {
-        if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.5/Headers"; }
-      }
-      $tcl_library      = "-F$stock_tcl_library_dir";
-      if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
-      $tcl_libs         = "-framework Tcl";
-      if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
+			## use our own Tcl/Tk framework builds when not compiling with Python, 
+			## as Apple's currently shipping versions are quite buggy
+			$tcl_include      = "-I$stock_tcl_include_dir";
+			if ($config_lp64) {
+				# 64-bit MacOS X builds (10.15 or 11.0) require Tcl/Tk 8.6 or later
+				if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.6/Headers"; }
+			} else {
+				if ($config_tk) { $tcl_include .= " -I$stock_tk_library_dir/Tk.framework/Versions/8.5/Headers"; }
+			}
+			$tcl_library      = "-F$stock_tcl_library_dir";
+			if ($config_tk) { $tcl_library .= " -F$stock_tk_library_dir"; }
+			$tcl_libs         = "-framework Tcl";
+			if ($config_tk) { $tcl_libs = "-framework Tk " . $tcl_libs; }
 
-      $vmd_include       = "$tcl_include";
-      $vmd_library       = "$tcl_library";
-      $vmd_libs          = "$tcl_libs";
+			$vmd_include       = "$tcl_include";
+			$vmd_library       = "$tcl_library";
+			$vmd_libs          = "$tcl_libs";
 
-      # MacOS 10.3 stuff
-      $vmd_library .= " -Wl,-executable_path . -lmx";
+			# MacOS 10.3 stuff
+			$vmd_library .= " -Wl,-executable_path . -lmx";
  
-      $fltk_libs        = "-lfltk";
-      $opengl_include   = $opengl_include;
-      if ($config_lp64) {
-        # 64-bit MacOS X builds use Cocoa rather than Carbon APIs
-        $opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Cocoa";
-      } else {
-        $opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Carbon";
-      }
-      if ($config_lp64) {
-        $arch_compilerc   = "/usr/bin/Rez";
-        $arch_rcflags     = "-t APPL -o ../MACOSXX86_64/vmd_MACOSXX86_64 vmdmac.r";
-      } else {
+			$fltk_libs        = "-lfltk";
+			$opengl_include   = $opengl_include;
+			if ($config_lp64) {
+				# 64-bit MacOS X builds use Cocoa rather than Carbon APIs
+				$opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Cocoa";
+			} else {
+				$opengl_dep_libs  = "-framework OpenGL -framework AGL -framework Carbon";
+			}
+			if ($config_lp64) {
+				$arch_compilerc   = "/usr/bin/Rez";
+				$arch_rcflags     = "-t APPL -o ../MACOSXX86_64/vmd_MACOSXX86_64 vmdmac.r";
+			} else {
 #        $arch_compilerc   = "/Developer/Tools/Rez";
-        $arch_compilerc   = "/usr/bin/Rez";
-        $arch_rcflags     = "-t APPL -o ../MACOSXX86/vmd_MACOSXX86 vmdmac.r";
-      }
-    }
+				$arch_compilerc   = "/usr/bin/Rez";
+				$arch_rcflags     = "-t APPL -o ../MACOSXX86/vmd_MACOSXX86 vmdmac.r";
+			}
+		}
 
-    $mesa_include     = $mesa_include . " -I/usr/X11R6/include";
-    $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		$mesa_include     = $mesa_include . " -I/usr/X11R6/include";
+		$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
 
-    if ($config_cuda) {
-      # This is a hack since we don't have a unified nvcc front-end install yet
-      if ($config_lp64) {
-        $arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
-        $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-        $cuda_dir         = "/usr/local/cuda-8.0";
-        $cuda_library     = "-L/usr/local/cuda-8.0/lib";
-      } else {
-        $arch_nvcc        = "/usr/local/cuda/bin/nvcc";
-        $arch_nvccflags   .= " --machine 32 -O3 $cuda_include";
-        $cuda_library     = "-L/usr/local/cuda/lib";
-      }
-    }
-    if ($config_opencl) {
-      $opencl_libs        = "-framework OpenCL";
-    }
+		if ($config_cuda) {
+			# This is a hack since we don't have a unified nvcc front-end install yet
+			if ($config_lp64) {
+				$arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
+				$arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+				$cuda_dir         = "/usr/local/cuda-8.0";
+				$cuda_library     = "-L/usr/local/cuda-8.0/lib";
+			} else {
+				$arch_nvcc        = "/usr/local/cuda/bin/nvcc";
+				$arch_nvccflags   .= " --machine 32 -O3 $cuda_include";
+				$cuda_library     = "-L/usr/local/cuda/lib";
+			}
+		}
+		if ($config_opencl) {
+			$opencl_libs        = "-framework OpenCL";
+		}
 
-    # no libm.a on MacOS-X
-    $system_include   = $system_include;
-    if ($config_lp64) {
-      $system_libs      = " -framework Cocoa ";
-    } else {
-      $system_libs      = " -framework Carbon ";
-    }
+		# no libm.a on MacOS-X
+		$system_include   = $system_include;
+		if ($config_lp64) {
+			$system_libs      = " -framework Cocoa ";
+		} else {
+			$system_libs      = " -framework Carbon ";
+		}
 }
 
 
 if ($config_arch eq "SUMMIT") {
-    $def_imageviewer="display %s";
+		$def_imageviewer="display %s";
 
-    # XXX currently the Summit EGL/GL install is broken, so we use hacks...
-    $egl_pbuffer_dir         = "";
-    $egl_pbuffer_library     = "-L/usr/lib64/nvidia";
-    $egl_pbuffer_include     = "-I/usr/include/nvidia";
-    $egl_pbuffer_libs        = "-lEGL";
+		# XXX currently the Summit EGL/GL install is broken, so we use hacks...
+		$egl_pbuffer_dir         = "";
+		$egl_pbuffer_library     = "-L/usr/lib64/nvidia";
+		$egl_pbuffer_include     = "-I/usr/include/nvidia";
+		$egl_pbuffer_libs        = "-lEGL";
 
-    if ($config_xlc) {
-      $arch_cc          = "xlc";
-      $arch_ccpp        = "xlC";
-      $arch_copts       = "-O4 -qsuppress=1500-036 -q64 -qarch=pwr9 -qtune=pwr9 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
-      $arch_opt_flag    = "-O4 -qsuppress=1500-036 -q64 -qarch=pwr9 -qtune=pwr9 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
+		if ($config_xlc) {
+			$arch_cc          = "xlc";
+			$arch_ccpp        = "xlC";
+			$arch_copts       = "-O4 -qsuppress=1500-036 -q64 -qarch=pwr9 -qtune=pwr9 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
+			$arch_opt_flag    = "-O4 -qsuppress=1500-036 -q64 -qarch=pwr9 -qtune=pwr9 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
 #      $arch_cppopts     = "-D_H_ACCESS=1";
-      $arch_depend_flag = "-MM";
-    } elsif ($config_gcc) {
-      $arch_cc          = "gcc";
-      $arch_ccpp        = "g++";
-      $arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
-      $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
-      $arch_depend_flag = "-MM";
-    } elsif ($config_clang) {
-      $arch_cc          = "clang";
-      $arch_ccpp        = "clang++";
-      $arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power9";
-      $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power9";
-      $arch_depend_flag = "-MM";
-    }
+			$arch_depend_flag = "-MM";
+		} elsif ($config_gcc) {
+			$arch_cc          = "gcc";
+			$arch_ccpp        = "g++";
+			$arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
+			$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
+			$arch_depend_flag = "-MM";
+		} elsif ($config_clang) {
+			$arch_cc          = "clang";
+			$arch_ccpp        = "clang++";
+			$arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power9";
+			$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power9";
+			$arch_depend_flag = "-MM";
+		}
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
+		}
 
-    # added a test so that EGL support works for now, but these bits of
-    # override code probably date back to RHEL4.x or earlier, and
-    # they likely serve no useful purpose going forward.
-    if (!$config_opengl_dispatch) {
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
-      $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
-    }
+		# added a test so that EGL support works for now, but these bits of
+		# override code probably date back to RHEL4.x or earlier, and
+		# they likely serve no useful purpose going forward.
+		if (!$config_opengl_dispatch) {
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
+			$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		}
 
-    $arch_cppopts     = "";
+		$arch_cppopts     = "";
 
-    # this is to make tcl happy
-    # also needed for plugins
-    $system_libs .= " -ldl";
+		# this is to make tcl happy
+		# also needed for plugins
+		$system_libs .= " -ldl";
 
-    if ($config_cuda) {
+		if ($config_cuda) {
 #      $arch_nvcc        = "/sw/summit/cuda/9.2.64/bin/nvcc";
 #      $cuda_include     = "-I/sw/summit/cuda/9.2.64/include";
 #      $cuda_library     = "-L/sw/summit/cuda/9.2.64/lib64";
 #      $arch_nvcc        = "/sw/summit/cuda/9.2.148/bin/nvcc";
 #      $cuda_include     = "-I/sw/summit/cuda/9.2.148/include";
 #      $cuda_library     = "-L/sw/summit/cuda/9.2.148/lib64";
-      $arch_nvcc        = "/sw/summit/cuda/11.0.3/bin/nvcc";
-      $cuda_include     = "-I/sw/summit/cuda/11.0.3/include";
-      $cuda_library     = "-L/sw/summit/cuda/11.0.3/lib64";
-      $cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
-  
-      # Only generate code for SM 7.0 on Summit
-      $arch_nvccflags   = "--ptxas-options=-v " .
-                      "-gencode arch=compute_70,code=sm_70 " .
-                      "--ftz=true ";
-      $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-    }
+			$arch_nvcc        = "/sw/summit/cuda/11.0.3/bin/nvcc";
+			$cuda_include     = "-I/sw/summit/cuda/11.0.3/include";
+			$cuda_library     = "-L/sw/summit/cuda/11.0.3/lib64";
+			$cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
+	
+			# Only generate code for SM 7.0 on Summit
+			$arch_nvccflags   = "--ptxas-options=-v " .
+											"-gencode arch=compute_70,code=sm_70 " .
+											"--ftz=true ";
+			$arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+		}
 
-    if ($config_mpi) {
-      $arch_copts       .= " -DUSE_MPI_IN_PLACE";
-      $arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
-      $mpi_libs        = "";
-      $mpi_dir         = "/sw/summit/.swci/1-compute/opt/spack/20171006/linux-rhel7-ppc64le/xl-20180223-beta/spectrum-mpi-10.2.0.0-20180110-bybgigxu6ksueoxu3tngxf7yqn7tzrz3";
-      $mpi_include     = "-I$mpi_dir/include";
-      $mpi_library     = "-L$mpi_dir/lib -L$mpi_dir/lib/pami_414";
-      $mpi_libs        = "-lmpi_ibm -lpami_cudahook -lpami -lhwloc -levent -levent_pthreads -lopen-rte -lopen-pal ";
-    }
+		if ($config_mpi) {
+			$arch_copts       .= " -DUSE_MPI_IN_PLACE";
+			$arch_opt_flag    .= " -DUSE_MPI_IN_PLACE";
+			$mpi_libs        = "";
+			$mpi_dir         = "/sw/summit/.swci/1-compute/opt/spack/20171006/linux-rhel7-ppc64le/xl-20180223-beta/spectrum-mpi-10.2.0.0-20180110-bybgigxu6ksueoxu3tngxf7yqn7tzrz3";
+			$mpi_include     = "-I$mpi_dir/include";
+			$mpi_library     = "-L$mpi_dir/lib -L$mpi_dir/lib/pami_414";
+			$mpi_libs        = "-lmpi_ibm -lpami_cudahook -lpami -lhwloc -levent -levent_pthreads -lopen-rte -lopen-pal ";
+		}
 }
 
 
 if ($config_arch eq "OPENPOWER" || $config_arch eq "SUMMITDEV") {
-    $def_imageviewer="display %s";
+		$def_imageviewer="display %s";
 
-    if ($config_xlc) {
-      $arch_cc          = "xlc";
-      $arch_ccpp        = "xlC";
-      $arch_copts       = "-O4 -q64 -qarch=pwr8 -qtune=pwr8 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
-      $arch_opt_flag    = "-O4 -q64 -qarch=pwr8 -qtune=pwr8 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
+		if ($config_xlc) {
+			$arch_cc          = "xlc";
+			$arch_ccpp        = "xlC";
+			$arch_copts       = "-O4 -q64 -qarch=pwr8 -qtune=pwr8 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
+			$arch_opt_flag    = "-O4 -q64 -qarch=pwr8 -qtune=pwr8 -qmaxmem=-1 -qnoipa -qignerrno -qfloat=rsqrt -qnostrict";
 #      $arch_cppopts     = "-D_H_ACCESS=1";
-      $arch_depend_flag = "-MM";
-    } else {
-      $arch_cc          = "gcc";
-      $arch_ccpp        = "g++";
-      $arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
-      $arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
-      $arch_depend_flag = "-MM";
-    }
+			$arch_depend_flag = "-MM";
+		} else {
+			$arch_cc          = "gcc";
+			$arch_ccpp        = "g++";
+			$arch_opt_flag    = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
+			$arch_copts       = "-m64 -Wall -Wno-unknown-pragmas -O3 -ffast-math -mtune=power8";
+			$arch_depend_flag = "-MM";
+		}
 
-    if ($config_static) {
-      $arch_lopts       = "-static"
-    } else {
-      $arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-static"
+		} else {
+			$arch_lopts       = "-Wl,-rpath,/usr/X11R6/lib -Wl,-rpath,/usr/local/lib";
+		}
 
-    # added a test so that EGL support works for now, but these bits of
-    # override code probably date back to RHEL4.x or earlier, and
-    # they likely serve no useful purpose going forward.
-    if (!$config_opengl_dispatch) {
-      $opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
-      $mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
-    }
+		# added a test so that EGL support works for now, but these bits of
+		# override code probably date back to RHEL4.x or earlier, and
+		# they likely serve no useful purpose going forward.
+		if (!$config_opengl_dispatch) {
+			$opengl_dep_libs  = "-L/usr/X11R6/lib -lGL -lXext -lX11";
+			$mesa_libs        = "-lMesaGL -L/usr/X11R6/lib -lXext -lX11";
+		}
 
-    $arch_cppopts     = "";
+		$arch_cppopts     = "";
 
-    # this is to make tcl happy
-    # also needed for plugins
-    $system_libs .= " -ldl";
+		# this is to make tcl happy
+		# also needed for plugins
+		$system_libs .= " -ldl";
 
-   if ($config_cuda) {
-     $arch_nvcc        = "/usr/local/cuda-9.2/bin/nvcc";
-     $cuda_library     = "-L/usr/local/cuda-9.2/lib64";
-     #$arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
-     #$cuda_library     = "-L/usr/local/cuda-8.0/lib64";
-     $cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
+	 if ($config_cuda) {
+		 $arch_nvcc        = "/usr/local/cuda-9.2/bin/nvcc";
+		 $cuda_library     = "-L/usr/local/cuda-9.2/lib64";
+		 #$arch_nvcc        = "/usr/local/cuda-8.0/bin/nvcc";
+		 #$cuda_library     = "-L/usr/local/cuda-8.0/lib64";
+		 $cuda_libs        = "-Wl,-rpath -Wl,\$\$ORIGIN/ -lcudart_static -lrt";
  
-     # Only generate code for SM 3.5 or higher on IBM machines
-     $arch_nvccflags   = "--ptxas-options=-v " .
-                     "-gencode arch=compute_35,code=sm_35 " .
-                     "-gencode arch=compute_50,code=sm_50 " .
-                     "-gencode arch=compute_60,code=sm_60 " .
-                     "-gencode arch=compute_70,code=sm_70 " .
-                     "--ftz=true ";
-     $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
-   }
+		 # Only generate code for SM 3.5 or higher on IBM machines
+		 $arch_nvccflags   = "--ptxas-options=-v " .
+										 "-gencode arch=compute_35,code=sm_35 " .
+										 "-gencode arch=compute_50,code=sm_50 " .
+										 "-gencode arch=compute_60,code=sm_60 " .
+										 "-gencode arch=compute_70,code=sm_70 " .
+										 "--ftz=true ";
+		 $arch_nvccflags   .= " --machine 64 -O3 $cuda_include";
+	 }
 }
 
 
 
 if ($config_arch eq "SOLARIS2" || $config_arch eq "SOLARIS2_64") {
-    $freevr_libs .= " -lrt";
+		$freevr_libs .= " -lrt";
 
-    if ($config_gcc) {
-      if ($config_lp64) {
-        print "GCC doesn't support LP64 ABI on this platform currently.\n";
-      }
-      $arch_ccpp        = "g++";
-      $arch_cc	        = "gcc";
-      $arch_opt_flag    = "-O";
-      $arch_copts       = "-O";
-      $arch_debug_flag  = "-g";
-      $arch_depend_flag = "-M";
-    } else {
-      # Using Sun's compilers.
-      if ($config_lp64) {
-        print "Configured for a 64-bit build.\n";
-        $arch_ccpp        = "CC -D__EXTENSIONS__";
-        $arch_cc          = "cc -D__EXTENSIONS__";
-        if ($config_pthreads) {
-          $arch_opt_flag    = "-mt -fast -xO3 -native -xarch=v9a";
-          $arch_copts       = "-mt -fast -xO3 -native -xarch=v9a";
-        } else { 
-          $arch_opt_flag    = "-fast -xO3 -native -xarch=v9a";
-          $arch_copts       = "-fast -xO3 -native -xarch=v9a";
-        }
-        $arch_debug_flag  = "-g";
-        $arch_depend_flag = "-xM";
-      } else {
-        print "Configured for a 32-bit build.\n";
-        $arch_ccpp        = "CC -D__EXTENSIONS__";
-        $arch_cc          = "cc -D__EXTENSIONS__";
-        if ($config_pthreads) {
-          $arch_opt_flag    = "-mt -fast -xO3 -native -xarch=v8plusa";
-          $arch_copts       = "-mt -fast -xO3 -native -xarch=v8plusa";
-        } else { 
-          $arch_opt_flag    = "-fast -xO3 -native -xarch=v8plusa";
-          $arch_copts       = "-fast -xO3 -native -xarch=v8plusa";
-        }
-        $arch_debug_flag  = "-g";
-        $arch_depend_flag = "-xM";
-      }
-    }
+		if ($config_gcc) {
+			if ($config_lp64) {
+				print "GCC doesn't support LP64 ABI on this platform currently.\n";
+			}
+			$arch_ccpp        = "g++";
+			$arch_cc	        = "gcc";
+			$arch_opt_flag    = "-O";
+			$arch_copts       = "-O";
+			$arch_debug_flag  = "-g";
+			$arch_depend_flag = "-M";
+		} else {
+			# Using Sun's compilers.
+			if ($config_lp64) {
+				print "Configured for a 64-bit build.\n";
+				$arch_ccpp        = "CC -D__EXTENSIONS__";
+				$arch_cc          = "cc -D__EXTENSIONS__";
+				if ($config_pthreads) {
+					$arch_opt_flag    = "-mt -fast -xO3 -native -xarch=v9a";
+					$arch_copts       = "-mt -fast -xO3 -native -xarch=v9a";
+				} else { 
+					$arch_opt_flag    = "-fast -xO3 -native -xarch=v9a";
+					$arch_copts       = "-fast -xO3 -native -xarch=v9a";
+				}
+				$arch_debug_flag  = "-g";
+				$arch_depend_flag = "-xM";
+			} else {
+				print "Configured for a 32-bit build.\n";
+				$arch_ccpp        = "CC -D__EXTENSIONS__";
+				$arch_cc          = "cc -D__EXTENSIONS__";
+				if ($config_pthreads) {
+					$arch_opt_flag    = "-mt -fast -xO3 -native -xarch=v8plusa";
+					$arch_copts       = "-mt -fast -xO3 -native -xarch=v8plusa";
+				} else { 
+					$arch_opt_flag    = "-fast -xO3 -native -xarch=v8plusa";
+					$arch_copts       = "-fast -xO3 -native -xarch=v8plusa";
+				}
+				$arch_debug_flag  = "-g";
+				$arch_depend_flag = "-xM";
+			}
+		}
 
 #   if compiling on Solaris 10, use this setting instead.
-   $arch_cppopts     = "";
+	 $arch_cppopts     = "";
 #    $arch_cppopts     = $arch_no_math_float;
 
-    if ($config_static) {
-      $arch_lopts       = "-Bstatic -lsocket -lnsl";
-    } else {
-      $arch_lopts       = "-lsocket -lnsl -ldl";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-Bstatic -lsocket -lnsl";
+		} else {
+			$arch_lopts       = "-lsocket -lnsl -ldl";
+		}
 
-    $opengl_dep_dir         = "/usr/openwin";
-    $opengl_dep_include     = "-I$opengl_dep_dir/include";
-    if ($config_lp64) {
-      $opengl_dep_library   = "-L$opengl_dep_dir/lib/sparcv9";
-    } else {
-      $opengl_dep_library   = "-L$opengl_dep_dir/lib";
-    }
-    $opengl_dep_libs        = "-lGL -lX11 -lXext";
+		$opengl_dep_dir         = "/usr/openwin";
+		$opengl_dep_include     = "-I$opengl_dep_dir/include";
+		if ($config_lp64) {
+			$opengl_dep_library   = "-L$opengl_dep_dir/lib/sparcv9";
+		} else {
+			$opengl_dep_library   = "-L$opengl_dep_dir/lib";
+		}
+		$opengl_dep_libs        = "-lGL -lX11 -lXext";
 
-    $mesa_include     = $mesa_include . " -I/usr/openwin/include";
-    if ($config_lp64) {
-      $mesa_library     = $mesa_library . " -L/usr/openwin/lib/sparcv9";
-      $mesa_libs        = "-lMesaGL -L/usr/openwin/lib/sparcv9 -lXext -lX11";
-    } else {
-      $mesa_library     = $mesa_library . " -L/usr/openwin/lib";
-      $mesa_libs        = "-lMesaGL -L/usr/openwin/lib -lXext -lX11";
-    }
+		$mesa_include     = $mesa_include . " -I/usr/openwin/include";
+		if ($config_lp64) {
+			$mesa_library     = $mesa_library . " -L/usr/openwin/lib/sparcv9";
+			$mesa_libs        = "-lMesaGL -L/usr/openwin/lib/sparcv9 -lXext -lX11";
+		} else {
+			$mesa_library     = $mesa_library . " -L/usr/openwin/lib";
+			$mesa_libs        = "-lMesaGL -L/usr/openwin/lib -lXext -lX11";
+		}
 }
 
 
 
 if ($config_arch eq "SOLARISX86" || $config_arch eq "SOLARISX86_64") {
-    if ($config_gcc) {
-      if ($config_lp64) {
-        die "No LP64 gcc for this platform currently.\n";
-      }
-      $arch_ccpp        = "g++";
-      $arch_cc	        = "gcc";
+		if ($config_gcc) {
+			if ($config_lp64) {
+				die "No LP64 gcc for this platform currently.\n";
+			}
+			$arch_ccpp        = "g++";
+			$arch_cc	        = "gcc";
 # XXX gcc/g++ 2.95 and newer need -fpermissive since the X11 headers 
 # on Solaris (and other systems) are broken and still assume that missing
 # types will default to int....  When they fix this in future revs of Solaris,
 # we can remove this flag.  See: http://gcc.gnu.org/fom_serv/cache/25.html
-      $arch_opt_flag    = "-Wall -Wno-unknown-pragmas -O -fpermissive";
-      $arch_copts       = "-Wall -Wno-unknown-pragmas -O";
-      $arch_debug_flag  = "-g";
-      $arch_depend_flag = "-M";
-    } else {
-      # Using Sun's compilers
-      if ($config_lp64) {
-        print "Configured for a 64-bit build.\n";
-        $arch_ccpp        = "CC -D__EXTENSIONS__";
-        $arch_cc          = "cc -D__EXTENSIONS__";
-        if ($config_pthreads) {
-          $arch_opt_flag    = "-mt -fast -xO5 -xarch=native64";
-          $arch_copts       = "-mt -fast -xO5 -xarch=native64";
-        } else {
-          $arch_opt_flag    = "-fast -xO5 -xarch=native64";
-          $arch_copts       = "-fast -xO5 -xarch=native64";
-        }
-        $arch_debug_flag  = "-g";
-        $arch_depend_flag = "-xM";
+			$arch_opt_flag    = "-Wall -Wno-unknown-pragmas -O -fpermissive";
+			$arch_copts       = "-Wall -Wno-unknown-pragmas -O";
+			$arch_debug_flag  = "-g";
+			$arch_depend_flag = "-M";
+		} else {
+			# Using Sun's compilers
+			if ($config_lp64) {
+				print "Configured for a 64-bit build.\n";
+				$arch_ccpp        = "CC -D__EXTENSIONS__";
+				$arch_cc          = "cc -D__EXTENSIONS__";
+				if ($config_pthreads) {
+					$arch_opt_flag    = "-mt -fast -xO5 -xarch=native64";
+					$arch_copts       = "-mt -fast -xO5 -xarch=native64";
+				} else {
+					$arch_opt_flag    = "-fast -xO5 -xarch=native64";
+					$arch_copts       = "-fast -xO5 -xarch=native64";
+				}
+				$arch_debug_flag  = "-g";
+				$arch_depend_flag = "-xM";
 
-        if ($config_cuda) {
-          # This is a hack since we don't have a unified nvcc front-end install yet
-          $arch_nvcc        = "/usr/local/cuda/bin/nvcc";
-          $arch_nvccflags   .= " -m64 -O3 -I/usr/local/cuda/include";
-          $cuda_libs        = "-lcudart";
-          $cuda_library     = "-L/usr/local/cuda/lib";
-        }
-      } else {
-        print "Configured for a 32-bit build.\n";
-        $arch_ccpp        = "CC -D__EXTENSIONS__";
-        $arch_cc          = "cc -D__EXTENSIONS__";
-        if ($config_pthreads) {
-          $arch_copts       = "-mt -fast -xO3 -native";
-          $arch_opt_flag    = "-mt -fast -xO2 -native";
-        } else {
-          $arch_copts       = "-fast -xO3 -native";
-          $arch_opt_flag    = "-fast -xO2 -native";
-        }
-        $arch_debug_flag  = "-g";
-        $arch_depend_flag = "-xM";
-      }
-    }
+				if ($config_cuda) {
+					# This is a hack since we don't have a unified nvcc front-end install yet
+					$arch_nvcc        = "/usr/local/cuda/bin/nvcc";
+					$arch_nvccflags   .= " -m64 -O3 -I/usr/local/cuda/include";
+					$cuda_libs        = "-lcudart";
+					$cuda_library     = "-L/usr/local/cuda/lib";
+				}
+			} else {
+				print "Configured for a 32-bit build.\n";
+				$arch_ccpp        = "CC -D__EXTENSIONS__";
+				$arch_cc          = "cc -D__EXTENSIONS__";
+				if ($config_pthreads) {
+					$arch_copts       = "-mt -fast -xO3 -native";
+					$arch_opt_flag    = "-mt -fast -xO2 -native";
+				} else {
+					$arch_copts       = "-fast -xO3 -native";
+					$arch_opt_flag    = "-fast -xO2 -native";
+				}
+				$arch_debug_flag  = "-g";
+				$arch_depend_flag = "-xM";
+			}
+		}
 
 #   if compiling on Solaris 10, use this setting instead.
-    $arch_cppopts     = "";
+		$arch_cppopts     = "";
 #    $arch_cppopts     = $arch_no_math_float;
 
-    if ($config_static) {
-      $arch_lopts       = "-Bstatic -lsocket -lnsl";
-    } else {
-      $arch_lopts       = "-lsocket -lnsl -ldl";
-    }
+		if ($config_static) {
+			$arch_lopts       = "-Bstatic -lsocket -lnsl";
+		} else {
+			$arch_lopts       = "-lsocket -lnsl -ldl";
+		}
 
-    $opengl_dep_dir         = "/usr/openwin";
-    $opengl_dep_include     = "-I$opengl_dep_dir/include";
-    if ($config_lp64) {
-      $opengl_dep_library     = "-L$opengl_dep_dir/lib/amd64";
-      $opengl_dep_libs        = "-lGL -lX11 -lXext";
-    } else {
-      $opengl_dep_library     = "-L$opengl_dep_dir/lib";
-      $opengl_dep_libs        = "-lGL  -lX11 -lXext";
-    }
+		$opengl_dep_dir         = "/usr/openwin";
+		$opengl_dep_include     = "-I$opengl_dep_dir/include";
+		if ($config_lp64) {
+			$opengl_dep_library     = "-L$opengl_dep_dir/lib/amd64";
+			$opengl_dep_libs        = "-lGL -lX11 -lXext";
+		} else {
+			$opengl_dep_library     = "-L$opengl_dep_dir/lib";
+			$opengl_dep_libs        = "-lGL  -lX11 -lXext";
+		}
 
-    $mesa_include     = $mesa_include . " -I/usr/openwin/include";
-    if ($config_lp64) {
-      $mesa_library     = $mesa_library . " -L/usr/openwin/lib/amd64";
-      $mesa_libs        = "-lMesaGL -L/usr/openwin/lib/amd64 -lXext -lX11";
-    } else {
-      $mesa_library     = $mesa_library . " -L/usr/openwin/lib";
-      $mesa_libs        = "-lMesaGL -L/usr/openwin/lib -lXext -lX11";
-    }
+		$mesa_include     = $mesa_include . " -I/usr/openwin/include";
+		if ($config_lp64) {
+			$mesa_library     = $mesa_library . " -L/usr/openwin/lib/amd64";
+			$mesa_libs        = "-lMesaGL -L/usr/openwin/lib/amd64 -lXext -lX11";
+		} else {
+			$mesa_library     = $mesa_library . " -L/usr/openwin/lib";
+			$mesa_libs        = "-lMesaGL -L/usr/openwin/lib -lXext -lX11";
+		}
 }
 
 
 if ($config_arch eq "WIN32") {
-    if ($config_msvc) {
-      $arch_ccpp        = "cl.exe";
-      $arch_cc	        = "cl.exe";
-      $arch_opt_flag    = "/O2 /G5 /nologo /MT /DWIN32 -Dstrcasecmp=strupcmp";
-      $arch_debug_flag  = "-g";
-      $arch_depend_flag = "-M";
-      $arch_copts       = "";
-      $arch_cppopts     = "/TP";
-      $arch_coptout     = "/Fo";
-    } else {
-      $arch_ccpp        = "g++";
-      $arch_cc	        = "gcc";
-      $arch_opt_flag    = "-O";
-      $arch_debug_flag  = "-g";
-      $arch_depend_flag = "-M";
-      $arch_copts       = "";
-      $arch_cppopts     = $arch_no_math_float;
-    }
+		if ($config_msvc) {
+			$arch_ccpp        = "cl.exe";
+			$arch_cc	        = "cl.exe";
+			$arch_opt_flag    = "/O2 /G5 /nologo /MT /DWIN32 -Dstrcasecmp=strupcmp";
+			$arch_debug_flag  = "-g";
+			$arch_depend_flag = "-M";
+			$arch_copts       = "";
+			$arch_cppopts     = "/TP";
+			$arch_coptout     = "/Fo";
+		} else {
+			$arch_ccpp        = "g++";
+			$arch_cc	        = "gcc";
+			$arch_opt_flag    = "-O";
+			$arch_debug_flag  = "-g";
+			$arch_depend_flag = "-M";
+			$arch_copts       = "";
+			$arch_cppopts     = $arch_no_math_float;
+		}
 
-    $def_imageviewer="explorer %s";
-    # startup command script file.  Read after program initialization.
-    $startupfilename="vmd.rc";
-    $pystartupfilename="pyvmd.rc";
+		$def_imageviewer="explorer %s";
+		# startup command script file.  Read after program initialization.
+		$startupfilename="vmd.rc";
+		$pystartupfilename="pyvmd.rc";
 }
 
 
 if ($config_arch eq "WIN64") {
-    $arch_ccpp	      = "g++";
-    $arch_cc	      = "gcc";
-    $arch_opt_flag    = "-O";
-    $arch_debug_flag  = "-g";
-    $arch_depend_flag = "-M";
+		$arch_ccpp	      = "g++";
+		$arch_cc	      = "gcc";
+		$arch_opt_flag    = "-O";
+		$arch_debug_flag  = "-g";
+		$arch_depend_flag = "-M";
 
-    $arch_copts       = "";
-    $arch_cppopts     = $arch_no_math_float;
-    $def_imageviewer="explorer %s";
-    # startup command script file.  Read after program initialization.
-    $startupfilename="vmd.rc";
+		$arch_copts       = "";
+		$arch_cppopts     = $arch_no_math_float;
+		$def_imageviewer="explorer %s";
+		# startup command script file.  Read after program initialization.
+		$startupfilename="vmd.rc";
 }
 
 
@@ -3389,21 +3400,14 @@ if ($config_arch eq "WIN64") {
 # purify.
 #
 if ($config_ccache) {
-  $arch_ccpp = "ccache " . $arch_ccpp;
-  $arch_cc   = "ccache " . $arch_cc;
+	$arch_ccpp = "ccache " . $arch_ccpp;
+	$arch_cc   = "ccache " . $arch_cc;
 }
 
-#
-# if purify is enabled, add it before the normal command lines.    
-#
-if ($config_purify) {
-  if ($config_lp64) {
-    $arch_ccpp = "purify -ptr64 " . $arch_ccpp;  
-    $arch_cc =   "purify -ptr64 " . $arch_cc;  
-  } else {
-    $arch_ccpp = "purify " . $arch_ccpp;  
-    $arch_cc =   "purify " . $arch_cc;  
-  }
+
+if ($config_sanitize && ($config_gcc || $config_clang)) {
+	$arch_opt_flag    .= " -fsanitize=address ";
+	$arch_copts       .= " -fsanitize=address ";
 }
 
 
@@ -3412,20 +3416,20 @@ if ($config_purify) {
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 $year += 1900;
 $config_date = ("January", "February", "March", "April", "May",  "June", "July", "August", "September", "October", "November", "December")[$mon] .  
-                " $mday, $year";
+								" $mday, $year";
 
 $config_version_msg = 
-    "VMD for $config_arch, version $progversion ($config_date)";
+		"VMD for $config_arch, version $progversion ($config_date)";
 
 ## Bypass making config.h if VMD_NO_CONFIG is set
 # This is helpful if you are debugging the configure script since
 # a lot of files depend on config.h, so even minimal changes
 # (like the date change for the version) causes a major recompile.
 if (!defined $ENV{'VMD_NO_CONFIG'}) {
-    open(OUTFILE, ">src/config.h") ||
+		open(OUTFILE, ">src/config.h") ||
 	die "Cannot open config.h: $!\n";
 
-    print OUTFILE <<EOM;
+		print OUTFILE <<EOM;
 #ifndef CONFIG_OPTIONS_H
 #define CONFIG_OPTIONS_H
 #define VMDVERSION "$progversion"
@@ -3452,22 +3456,22 @@ if (!defined $ENV{'VMD_NO_CONFIG'}) {
 #define VMD_CMD_PROMPT "$promptstring"
 #endif
 EOM
-    ;
+		;
 
-    close(OUTFILE);
+		close(OUTFILE);
 } else {
-    print "Not making config.h because VMD_NO_CONFIG is set.\n";
+		print "Not making config.h because VMD_NO_CONFIG is set.\n";
 }
 
 ########################### Make vmd_version.txt ####################
 open(OUTFILE, ">doc/vmd_version.txt") || 
-    die "Cannot open vmd_version.txt: $!\n";
+		die "Cannot open vmd_version.txt: $!\n";
  print OUTFILE ("Build version: " . $progversion . "\n");
 close(OUTFILE);
 
 ########################### Make vmd_version.tex ####################
 open(OUTFILE, ">doc/vmd_version.tex") ||
-    die "Cannot open vmd_version.tex: $!\n";
+		die "Cannot open vmd_version.tex: $!\n";
  print OUTFILE ('\newcommand{\VMDNAME} {'        . "vmd"   . "}\n");
  print OUTFILE ('\newcommand{\VMDDATE} {'        . $config_date    . "}\n");
  print OUTFILE ('\newcommand{\VMDVER} {'         . $progversion    . "}\n");
@@ -3508,29 +3512,29 @@ close(OUTFILE);
 @VMD_PTX           = ();
 
 sub create_config_option {
-    local($param) = $_[0];
-    local($if_statement) = '';
-    $if_statement =<<END_OF_IF;
+		local($param) = $_[0];
+		local($if_statement) = '';
+		$if_statement =<<END_OF_IF;
 if (\$config_${param}) {
-    push(\@DEFINES , \$${param}_defines);
-    push(\@INCDIRS , \$${param}_include);
-    push(\@LIBDIRS , \$${param}_library);
-    push(\@LIBS    , \$${param}_libs);
-    push(\@VMD_CC  , \@${param}_cc);
-    push(\@VMD_CU  , \@${param}_cu);
-    push(\@VMD_CCPP, \@${param}_ccpp);
-    push(\@VMD_CCPP_AVX, \@${param}_ccpp_avx);
-    push(\@VMD_CCPP_AVX2, \@${param}_ccpp_avx2);
-    push(\@VMD_CCPP_AVX512, \@${param}_ccpp_avx512);
-    push(\@VMD_CCPP_AVX512ER, \@${param}_ccpp_avx512er);
-    push(\@VMD_CCPP_NEON, \@${param}_ccpp_neon);
-    push(\@VMD_CCPP_SVE, \@${param}_ccpp_sve);
-    push(\@VMD_H   , \@${param}_h);
-    push(\@VMD_PTX , \@${param}_ptx);
+		push(\@DEFINES , \$${param}_defines);
+		push(\@INCDIRS , \$${param}_include);
+		push(\@LIBDIRS , \$${param}_library);
+		push(\@LIBS    , \$${param}_libs);
+		push(\@VMD_CC  , \@${param}_cc);
+		push(\@VMD_CU  , \@${param}_cu);
+		push(\@VMD_CCPP, \@${param}_ccpp);
+		push(\@VMD_CCPP_AVX, \@${param}_ccpp_avx);
+		push(\@VMD_CCPP_AVX2, \@${param}_ccpp_avx2);
+		push(\@VMD_CCPP_AVX512, \@${param}_ccpp_avx512);
+		push(\@VMD_CCPP_AVX512ER, \@${param}_ccpp_avx512er);
+		push(\@VMD_CCPP_NEON, \@${param}_ccpp_neon);
+		push(\@VMD_CCPP_SVE, \@${param}_ccpp_sve);
+		push(\@VMD_H   , \@${param}_h);
+		push(\@VMD_PTX , \@${param}_ptx);
 }
 END_OF_IF
-    ;
-    return $if_statement;
+		;
+		return $if_statement;
 }
 
 $if_statements = '';
@@ -3602,15 +3606,15 @@ eval($if_statements);
 
 # convert a list into a set of lines for Makefile dependencies
 sub makefile_lines_tabcr {
-  # this one puts in carriage returns and tabs, which cause problems 
-  # for some versions of Make, such as SGI
-  join(" \\\n\t\t", @_);
+	# this one puts in carriage returns and tabs, which cause problems 
+	# for some versions of Make, such as SGI
+	join(" \\\n\t\t", @_);
 }
 
 sub makefile_lines {
-  # this version just puts in spaces, which works much better, but is less 
-  # readable in the resulting makefile.
-  join(" ", @_);
+	# this version just puts in spaces, which works much better, but is less 
+	# readable in the resulting makefile.
+	join(" ", @_);
 }
 
 $DEFINES             = &makefile_lines(@DEFINES);
@@ -3637,13 +3641,13 @@ $VMD_OTHER_NAMES     = &makefile_lines(@vmd_other_names);
 $VMD_MAIN_DIR_FILES  = &makefile_lines(@vmd_main_dir_files);
 
 if ($config_silent) {
-    $SILENT = ".SILENT:";
+		$SILENT = ".SILENT:";
 } else {
-    $SILENT = "#.SILENT:";
+		$SILENT = "#.SILENT:";
 }
 
 open(OUTFILE, ">src/$vmd_src_dir/Makefile") ||
-    die "Cannot open $vmd_src_dir/Makefile: $!\n";
+		die "Cannot open $vmd_src_dir/Makefile: $!\n";
 
 print OUTFILE<<EOM;
 
@@ -3831,7 +3835,7 @@ install:
 	-\$(COPY) ../LICENSE       "$install_library_dir"
 	-\$(COPY) $vmd_doc_dir/ug.pdf        "$install_library_dir"/doc
 	if [ -f $install_library_dir/$config_progname ]; then \\
-           \$(MOVE) "$install_library_dir/$config_progname" "$install_library_dir/OLD_$config_progname" ; \$(DELETE) "$install_library_dir/OLD_$config_progname" ; fi
+					 \$(MOVE) "$install_library_dir/$config_progname" "$install_library_dir/OLD_$config_progname" ; \$(DELETE) "$install_library_dir/OLD_$config_progname" ; fi
 	-\$(COPY) ../$config_arch/$config_progname "$install_library_dir"
 	if [ -d "../lib/redistrib/lib_$config_arch" ]; then \\
 		\$(CD) ../lib/redistrib/lib_$config_arch; \$(TAR) -cf - ./* | \\
@@ -3855,14 +3859,14 @@ install:
 	-\$(COPY) ../data/.vmdrc ../data/.vmdsensors ../data/vmd_completion.dat "$install_library_dir"
 	\$(CD) $vmd_bin_dir ; \\
 	if [ -f run_vmd_tmp ]; then \$(DELETE) run_vmd_tmp; fi ; \\
-    \$(ECHO) "Info: /bin/csh shell not found, installing Bourne shell startup script instead" ; \\
-    \$(ECHO) '#!/bin/sh' >> run_vmd_tmp ; \\
-    \$(ECHO) 'defaultvmddir=/usr/lib/vmd' >> run_vmd_tmp ; \\
-    \$(ECHO) 'vmdbasename=vmd' >> run_vmd_tmp ; \\
-    cat $vmd_bin_sh >> run_vmd_tmp ; \\
-  chmod +x run_vmd_tmp ; \\
-  \$(COPY) run_vmd_tmp "$install_bin_dir"/$install_name ; \\
-  \$(DELETE) run_vmd_tmp
+		\$(ECHO) "Info: /bin/csh shell not found, installing Bourne shell startup script instead" ; \\
+		\$(ECHO) '#!/bin/sh' >> run_vmd_tmp ; \\
+		\$(ECHO) 'defaultvmddir=/usr/lib/vmd' >> run_vmd_tmp ; \\
+		\$(ECHO) 'vmdbasename=vmd' >> run_vmd_tmp ; \\
+		cat $vmd_bin_sh >> run_vmd_tmp ; \\
+	chmod +x run_vmd_tmp ; \\
+	\$(COPY) run_vmd_tmp "$install_bin_dir"/$install_name ; \\
+	\$(DELETE) run_vmd_tmp
 	\$(ECHO) Make sure "$install_bin_dir"/$install_name is in your path.
 	\$(ECHO) "VMD installation complete.  Enjoy!"
 
@@ -3873,46 +3877,46 @@ clean:
 
 veryclean: clean
 	\$(CD) $vmd_arch_dir ; \\
-	  \$(DELETE) $config_progname
+		\$(DELETE) $config_progname
 	\$(CD) $vmd_src_dir ; \\
-	  \$(DELETE) *.ptx *.o *.lst *.a *~ core; \\
-	  \$(DELETE) $config_progname
+		\$(DELETE) *.ptx *.o *.lst *.a *~ core; \\
+		\$(DELETE) $config_progname
 	\$(CD) $vmd_doc_dir ; \\
-	  \$(DELETE) *~ core
+		\$(DELETE) *~ core
 
 # The '/usr/include' stuff is to reduce checking /usr/include dates
 depend: y.tab.h
 	if [ "\$(DEPEND)" != "" ]; then \\
 	echo "Building Makefile dependencies"; \\
-	  \$(ECHO) "Creating " \$(DEPENDFILE) " ..."; \\
-	  if [ -f \$(DEPENDFILE) ]; then \\
-	    \$(MOVE) -f \$(DEPENDFILE) \$(DEPENDFILE).old; \\
+		\$(ECHO) "Creating " \$(DEPENDFILE) " ..."; \\
+		if [ -f \$(DEPENDFILE) ]; then \\
+			\$(MOVE) -f \$(DEPENDFILE) \$(DEPENDFILE).old; \\
 	fi; \\
-	  touch \$(DEPENDFILE); \\
+		touch \$(DEPENDFILE); \\
 	for i in ZZZ \$(VMD_CCPP) ; do \\
-	  if [ "\$\$i" != "ZZZ" ]; then \\
-	        \$(ECHO) checking dependencies for \$\$i ...; \\
-	        \$(CCPP) \$(DEPEND) \$(CPPFLAGS) \$\$i |  \\
+		if [ "\$\$i" != "ZZZ" ]; then \\
+					\$(ECHO) checking dependencies for \$\$i ...; \\
+					\$(CCPP) \$(DEPEND) \$(CPPFLAGS) \$\$i |  \\
 			sed -e 's/\\/usr\\/include\\/[^ ]*\\..//g' \\
-			    -e 's/\\.\\.\\/lib\\/.*\\/[^ ]*\\..//g' | \\
+					-e 's/\\.\\.\\/lib\\/.*\\/[^ ]*\\..//g' | \\
 			grep -v '^ *\\\\\$\$' >> \$(DEPENDFILE) ; \\
-	  fi; \\
+		fi; \\
 	done; \\
 	for i in ZZZ \$(VMD_CC) ; do \\
-	  if [ "\$\$i" != "ZZZ" ]; then \\
-	        \$(ECHO) checking dependencies for \$\$i ...; \\
-	        \$(CC) \$(DEPEND) \$(CFLAGS) \$\$i |  \\
+		if [ "\$\$i" != "ZZZ" ]; then \\
+					\$(ECHO) checking dependencies for \$\$i ...; \\
+					\$(CC) \$(DEPEND) \$(CFLAGS) \$\$i |  \\
 			sed -e 's/\\/usr\\/include\\/[^ ]*\\..//g' \\
-			    -e 's/\\.\\.\\/lib\\/.*\\/[^ ]*\\..//g' | \\
+					-e 's/\\.\\.\\/lib\\/.*\\/[^ ]*\\..//g' | \\
 			grep -v '^ *\\\\\$\$' >> \$(DEPENDFILE) ; \\
-	  fi; \\
+		fi; \\
 	done; \\
 	\$(ECHO) ParseTree.o AtomLexer.o AtomParser.o: y.tab.h \\
-                >> \$(DEPENDFILE); \\
+								>> \$(DEPENDFILE); \\
 	\$(COPY) \$(DEPENDFILE) \$(DEPENDFILE).$config_arch ; \\
 	else \\
-	  \$(ECHO) "Cannot find dependencies; your compiler does not support dependency checking."; \\
-        fi
+		\$(ECHO) "Cannot find dependencies; your compiler does not support dependency checking."; \\
+				fi
 
 
 
@@ -3922,10 +3926,10 @@ depend: y.tab.h
 include Makedata.depend
 
 EOM
-    ;
+		;
 close(OUTFILE);
 
 if (! -d  $config_arch) {
-  `mkdir $config_arch`;
+	`mkdir $config_arch`;
 }
 

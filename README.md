@@ -16,7 +16,7 @@ For completeness, we also provide instructions for [building packages](#bonus-li
 
 This is pretty straightforward, since we'll need to grab a copy of the VMD source code, as well as packages that unlock VMD features.
 Getting the VMD source is easy, since you just go to the  [VMD download page](https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD) and grab a copy of the source.
-This will be a compressed archive, so you will need to uncompress it with `tar -zxf vmdsourcecode.tgz`, with the filenames actually looking something like: `vmd-1.9.4a55.src.tar.gz`.
+This will be a compressed archive, so you will need to uncompress it with `tar -zxf vmdsourcecode.tgz`, with the filenames actually looking something like: `vmd-1.9.4a57.src.tar.gz`.
 This specific alpha version is the one that is assumed throughout the guide, and may require revision to be used for other versions.
 
 Now, there are other packages that we will need to grab that are not installed by default on Ubuntu installations.
@@ -36,7 +36,7 @@ The last two lines might look a little funny, but there is an unrelated package 
 There are also Debian packages that need to be installed as basic dependencies.
 ```bash
 sudo apt install devscripts debhelper #Package building and general compilation
-sudo apt install libtachyon-mt-0-dev python3.8-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
+sudo apt install libtachyon-mt-0-dev python3.10-dev tcl8.6-dev tk8.6-dev libnetcdf-dev libpng-dev python3-numpy python3-tk mesa-common-dev libglu1-mesa-dev libxinerama-dev libfltk1.3-dev coreutils sed #VMD required headers and libraries.
 ```
 
 To build VMD with CUDA, you will need a CUDA toolkit.
@@ -50,14 +50,14 @@ The code below will install the CUDA toolkit from NVIDIA for Ubuntu 20.04.
 
 
 ```bash
-sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt update
 sudo apt install cuda
 ```
 
 If you prefer the older CUDA packages in the Ubuntu repositories, you'd do the following.
+I cannot emphasize enough how much of a pain it is to work with the Ubuntu version, which has at least one showstopping compilation bug in 22.04.
 ```bash
 sudo apt install nvidia-cuda-toolkit
 ```
@@ -69,9 +69,9 @@ The structure is defined by Debian, and as a result, the [Debian package buildin
 Debian expects a rigid directory structure for packaging:
 ```
 vmdpackaging
-|   vmd_1.9.4a55.orig.tar.gz
+|   vmd_1.9.4a57.orig.tar.gz
 |
-└───vmd-1.9.4a55
+└───vmd-1.9.4a57
     |	Makefile
     |	vmd.png
     |
@@ -95,11 +95,11 @@ Feel free to copy from this github repository to start with.
 ```bash
 mkdir vmdpackaging
 cd vmdpackaging
-mv ~/vmd-1.9.4a55.src.tar.gz vmd_1.9.4a55.orig.tar.gz
-mkdir vmd-1.9.4a55
-cd vmd-1.9.4a55
-tar -zxf ../vmd_1.9.4a55.orig.tar.gz
-mv vmd-1.9.4a55 vmd
+mv ~/vmd-1.9.4a57.src.tar.gz vmd_1.9.4a57.orig.tar.gz
+mkdir vmd-1.9.4a57
+cd vmd-1.9.4a57
+tar -zxf ../vmd_1.9.4a57.orig.tar.gz
+mv vmd-1.9.4a57 vmd
 #Get the initial, not totally broken debian files.
 git init
 git remote add origin https://github.com/jvermaas/vmd-packaging-instructions.git
@@ -190,6 +190,7 @@ This is the diff:
 +		    "-gencode arch=compute_75,code=sm_75 " .
 +                    "-gencode arch=compute_80,code=sm_80 " .
 +                    "-gencode arch=compute_86,code=sm_86 " .
++                    "-gencode arch=compute_89,code=sm_89 " .
                      "--ftz=true ";
  #                    "-gencode arch=compute_75,code=sm_75 " .
  $arch_gcc         = "gcc";
@@ -249,7 +250,7 @@ This is the diff:
    $stock_numpy_include_dir=$ENV{"NUMPY_INCLUDE_DIR"} || "$vmd_library_dir/numpy/lib_$config_arch/include";
    $stock_numpy_library_dir=$ENV{"NUMPY_LIBRARY_DIR"} || "$vmd_library_dir/python/lib_$config_arch/lib/python2.5/site-packages/numpy/core/include";
 -  $python_libs        = "-lpython2.5 -lpthread";
-+  $python_libs        = "-lpython3.8 -lpthread";
++  $python_libs        = "-lpython3.10 -lpthread";
  }
  
  $python_defines     = "-DVMDPYTHON";
@@ -354,12 +355,9 @@ This has stride, tachyon, and surf executables set to weird paths. I put them in
 ```
 Again, you could copy this from the edited version from github. `cp edited/vmd.sh vmd/bin/vmd.sh`
 
-There is a syntactical mistake in `vmd/src/OptiXRenderer.C` in version 1.9.4a55 that newer versions of `gcc` don't like, so we also have one more copy to make.
-`cp edited/OptiXRenderer.C vmd/src/OptiXRenderer.C`
-
 ## Debuild builds packages
 
-The build process itself is largely automated by `debuild`, run from the base directory we have been working from (`vmdpackaging/vmd-1.9.4a55`).
+The build process itself is largely automated by `debuild`, run from the base directory we have been working from (`vmdpackaging/vmd-1.9.4a57`).
 
 ```bash
 debuild -b
@@ -373,7 +371,7 @@ This is to be expected, and so long as the `.deb` files are produced, these erro
 To install these packages directly, you would do something like:
 ```bash
 cd .. #Puts you in the right directory.
-sudo dpkg -i vmd-cuda_1.9.4a55-3_amd64.deb vmd-plugins_1.9.4a55-3_amd64.deb
+sudo dpkg -i vmd-cuda_1.9.4a57-1_amd64.deb vmd-plugins_1.9.4a55-1_amd64.deb
 ```
 
 This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
@@ -389,9 +387,9 @@ With the setup complete, the commands to add the newly built packages to the rep
 
 ```bash
 cd /var/www/repos/apt/ubuntu/
-sudo reprepro includedeb focal ~/vmdpackaging/vmd-cuda_1.9.4a55-3_amd64.deb
-sudo reprepro includedeb focal ~/vmdpackaging/vmd-plugins_1.9.4a55-3_amd64.deb
-sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a55-3_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd-cuda_1.9.4a57-1_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd-plugins_1.9.4a57-1_amd64.deb
+sudo reprepro includedeb focal ~/vmdpackaging/vmd_1.9.4a57-1_amd64.deb
 ```
 
 
