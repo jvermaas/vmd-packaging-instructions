@@ -1,18 +1,5 @@
-vmd (1.9.4a55-3) focal; urgency=low
-
-  * Fix stride
-
- -- Josh Vermaas <vermaas2@illinois.edu>  Fri, 26 Nov 2021 19:45:00 -0500
-
-vmd (1.9.4a55-2) focal; urgency=low
-
-  * Fix py_molecule.C again
-
- -- Josh Vermaas <vermaas2@illinois.edu>  Tue, 10 Nov 2021 17:23:00 -0500
-
-vmd (1.9.4a55-1) focal; urgency=low
+vmd (1.9.4a57-1) focal; urgency=low
 
   * Initial release
 
- -- Josh Vermaas <vermaas2@illinois.edu>  Tue, 19 Oct 2021 20:13:00 -0500
-
+ -- Josh Vermaas <vermaas2@illinois.edu>  Tue, 8 Aug 2023 13:49:00 -0500

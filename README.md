@@ -203,7 +203,7 @@ This is to be expected, and so long as the `.deb` files are produced, these erro
 To install these packages directly, you would do something like:
 ```bash
 cd .. #Puts you in the right directory.
-sudo dpkg -i vmd-cuda_1.9.4a57-1_amd64.deb vmd-plugins_1.9.4a55-1_amd64.deb
+sudo dpkg -i vmd-cuda_1.9.4a57-1_amd64.deb vmd-plugins_1.9.4a57-1_amd64.deb
 ```
 
 This would get you a `vmd` command already added to your path, which includes Python support through system Python libraries.
